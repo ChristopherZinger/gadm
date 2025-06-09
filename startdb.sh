@@ -1,0 +1,1 @@
+docker compose -f "../pg-ingest-source/docker-compose.yml" up -d
