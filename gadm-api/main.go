@@ -62,7 +62,6 @@ func main() {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(featureCollectionRawMsg)
 		w.WriteHeader(http.StatusOK)
 		w.Write(featureCollectionRawMsg)
 	})
