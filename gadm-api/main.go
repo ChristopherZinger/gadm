@@ -9,9 +9,19 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type GeoJSONFeature struct {
+	Type       string                 `json:"type"`
+	Geometry   json.RawMessage        `json:"geometry"`
+	Properties map[string]interface{} `json:"properties"`
+}
+
+type GeoJSONFeatureCollection struct {
+	Type     string           `json:"type"`
+	Features []GeoJSONFeature `json:"features"`
+}
 
 func main() {
 	pgUrl := os.Getenv("DATABASE_URL")
@@ -33,29 +43,28 @@ func main() {
 		}
 		take = _take
 
-		offsetStr := r.URL.Query().Get("offset")
-		offset, err := strconv.Atoi(offsetStr)
-		if err != nil {
-			panic(err)
+		var offset int
+		if r.URL.Query().Has("offset") {
+			offsetStr := r.URL.Query().Get("offset")
+			offset, err = strconv.Atoi(offsetStr)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		var opt SearchQueryOptions
 		opt.Limit = take
 		opt.Offset = offset
 
-		countries, err := queryAdm0(dbPool, ctx, opt)
-		if err != nil {
-			panic(err)
-		}
-
-		jsonResponse, err := json.Marshal(countries)
+		featureCollectionRawMsg, err := queryAdm0(dbPool, ctx, opt)
 		if err != nil {
 			panic(err)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(featureCollectionRawMsg)
 		w.WriteHeader(http.StatusOK)
-		w.Write(jsonResponse)
+		w.Write(featureCollectionRawMsg)
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -66,25 +75,36 @@ type SearchQueryOptions struct {
 	Offset int
 }
 
-type Lv1QueryResult struct {
-	Fid     int    `json:"fid"`
-	Gid0    string `json:"gid_0"`
-	Country string `json:"country"`
-}
+func queryAdm0(dbPool *pgxpool.Pool, ctx context.Context, opt SearchQueryOptions) (json.RawMessage, error) {
+	sqlQuery := `
+			SELECT json_build_object(
+				'type', 'FeatureCollection',
+				'features', json_agg(
+					json_build_object(
+						'type', 'Feature',
+						'geometry', ST_AsGeoJSON(geom)::json,
+						'properties', json_build_object(
+							'fid', fid,
+							'gid_0', gid_0,
+							'country', country
+						)
+					)
+				)
+			) as feature_collection
+			FROM (
+				SELECT fid, gid_0, country, geom 
+				FROM adm_0 
+				WHERE geom IS NOT NULL 
+				LIMIT $1 OFFSET $2
+			) sub
+		`
 
-func queryAdm0(dbPool *pgxpool.Pool, ctx context.Context, opt SearchQueryOptions) ([]Lv1QueryResult, error) {
-	sqlQuery := `select fid as Fid, gid_0 as Gid0, country as Country
-		from adm_0 
-		limit $1
-		offset $2;`
-
-	rows, _ := dbPool.Query(ctx, sqlQuery, opt.Limit, opt.Offset)
-
-	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Lv1QueryResult])
+	var featureCollectionJSON json.RawMessage
+	err := dbPool.QueryRow(ctx, sqlQuery, opt.Limit, opt.Offset).Scan(&featureCollectionJSON)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 
-	return result, nil
+	return featureCollectionJSON, nil
 }
