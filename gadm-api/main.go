@@ -53,28 +53,109 @@ func main() {
 			}
 		}
 
+		responseFormat := r.URL.Query().Get("response-format")
+		if responseFormat != "" && responseFormat != "feature-collection" && responseFormat != "geojsonl" {
+			http.Error(
+				w,
+				"Invalid response-format parameter. Must be either 'feature-collection' or 'geojsonl'",
+				http.StatusBadRequest,
+			)
+			return
+		}
+
 		var opt SearchQueryOptions
 		opt.Limit = take
 		opt.Offset = offset
+		opt.ResponseFormat = responseFormat
 
-		featureCollectionRawMsg, err := queryAdmLv0FeatureCollection(ctx, dbPool, opt)
-		if err != nil {
-			panic(err)
+		if responseFormat == "geojsonl" {
+			w.Header().Set("Content-Type", "application/x-ndjson")
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("Connection", "keep-alive")
+
+			err := queryAdmLv1GeoJsonl(ctx, dbPool, w, opt)
+			if err != nil {
+				log.Printf("Error streaming GeoJSONL: %v", err)
+				return
+			}
+		} else {
+			featureCollectionRawMsg, err := queryAdmLv0FeatureCollection(ctx, dbPool, opt)
+			if err != nil {
+				panic(err)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(featureCollectionRawMsg)
 		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(featureCollectionRawMsg)
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 type SearchQueryOptions struct {
-	Limit  int
-	Offset int
+	Limit          int
+	Offset         int
+	ResponseFormat string
 }
 
+// TODO: check for max limit and optimize offset; Also fix logging
+func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.ResponseWriter, opt SearchQueryOptions) error {
+	sqlQuery := `
+		SELECT json_build_object(
+			'type', 'Feature',
+			'geometry', ST_AsGeoJSON(geom)::json,
+			'properties', json_build_object(
+				'fid', fid,
+				'gid_0', gid_0,
+				'country', country
+			)
+		)
+		FROM adm_0 
+		WHERE geom IS NOT NULL 
+		LIMIT $1 OFFSET $2;
+	`
+
+	rows, err := dbPool.Query(ctx, sqlQuery, opt.Limit, opt.Offset)
+	if err != nil {
+		return fmt.Errorf("failed to query database: %w", err)
+	}
+	defer rows.Close()
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		log.Printf("Warning: ResponseWriter doesn't support flushing - data may be buffered")
+	}
+
+	for rows.Next() {
+		var featureJSON json.RawMessage
+		if err := rows.Scan(&featureJSON); err != nil {
+			return fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		if _, err := w.Write(featureJSON); err != nil {
+			return fmt.Errorf("failed to write feature: %w", err)
+		}
+		if _, err := w.Write([]byte("\n")); err != nil {
+			return fmt.Errorf("failed to write newline: %w", err)
+		}
+
+		if flusher != nil {
+			flusher.Flush()
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("row iteration error: %w", err)
+	}
+
+	return nil
+}
 
 func queryAdmLv0FeatureCollection(ctx context.Context, dbPool *pgxpool.Pool, opt SearchQueryOptions) (json.RawMessage, error) {
 	sqlQuery := `
