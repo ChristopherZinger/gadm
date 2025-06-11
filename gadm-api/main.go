@@ -25,7 +25,6 @@ type GeoJSONFeatureCollection struct {
 
 func main() {
 	pgUrl := os.Getenv("DATABASE_URL")
-	ctx := context.Background()
 
 	dbPool, err := pgxpool.New(context.Background(), pgUrl)
 	if err != nil {
@@ -35,6 +34,8 @@ func main() {
 	defer dbPool.Close()
 
 	http.HandleFunc("/api/v1/lv1", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
 		take := 10
 		takeStr := r.URL.Query().Get("take")
 		_take, err := strconv.Atoi(takeStr)
@@ -56,7 +57,7 @@ func main() {
 		opt.Limit = take
 		opt.Offset = offset
 
-		featureCollectionRawMsg, err := queryAdm0(dbPool, ctx, opt)
+		featureCollectionRawMsg, err := queryAdmLv0FeatureCollection(ctx, dbPool, opt)
 		if err != nil {
 			panic(err)
 		}
@@ -74,7 +75,8 @@ type SearchQueryOptions struct {
 	Offset int
 }
 
-func queryAdm0(dbPool *pgxpool.Pool, ctx context.Context, opt SearchQueryOptions) (json.RawMessage, error) {
+
+func queryAdmLv0FeatureCollection(ctx context.Context, dbPool *pgxpool.Pool, opt SearchQueryOptions) (json.RawMessage, error) {
 	sqlQuery := `
 			SELECT json_build_object(
 				'type', 'FeatureCollection',
