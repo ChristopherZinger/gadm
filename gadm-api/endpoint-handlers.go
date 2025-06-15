@@ -6,11 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
-
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/spf13/viper"
 )
 
 const MIN_FID = 0
@@ -34,35 +30,6 @@ type QueryParams struct {
 type GadmLvPaginationOptions struct {
 	Limit         int
 	StartAfterFid int
-}
-
-type Server struct {
-	db *pgxpool.Pool
-}
-
-func main() {
-	viper.SetConfigFile(".env")
-	viper.ReadInConfig()
-	pgUrl := viper.GetString("DATABASE_URL")
-
-	dbPool, err := pgxpool.New(context.Background(), pgUrl)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
-	}
-	defer dbPool.Close()
-
-	server := newServer(dbPool)
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/api/v1/geojsonl/lv1", server.handleGeoJsonlLv1)
-	mux.HandleFunc("/api/v1/fc/lv1", server.handleFeatureCollectionLv1)
-
-	log.Fatal(http.ListenAndServe(":8080", mux))
-}
-
-func newServer(db *pgxpool.Pool) *Server {
-	return &Server{db: db}
 }
 
 func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +63,7 @@ func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
 func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
