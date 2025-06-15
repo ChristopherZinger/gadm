@@ -36,6 +36,10 @@ type GadmLvPaginationOptions struct {
 	StartAfterFid int
 }
 
+type Server struct {
+	db *pgxpool.Pool
+}
+
 func main() {
 	viper.SetConfigFile(".env")
 	viper.ReadInConfig()
@@ -48,74 +52,83 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	http.HandleFunc("/api/v1/geojsonl/lv1", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+	server := newServer(dbPool)
+	mux := http.NewServeMux()
 
-		take, err := expectIntParamInQuery(r, "take")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	mux.HandleFunc("/api/v1/geojsonl/lv1", server.handleGeoJsonlLv1)
+	mux.HandleFunc("/api/v1/fc/lv1", server.handleFeatureCollectionLv1)
 
-		startAfterFid, err := expectIntParamInQuery(r, "startAfter")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	log.Fatal(http.ListenAndServe(":8080", mux))
+}
 
-		var opt GadmLvPaginationOptions
-		opt.Limit = take
-		opt.StartAfterFid = startAfterFid
+func newServer(db *pgxpool.Pool) *Server {
+	return &Server{db: db}
+}
 
-		log.Printf("geojsonl/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
+func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		w.Header().Set("Content-Type", "application/x-ndjson")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("Connection", "keep-alive")
+	take, err := expectIntParamInQuery(r, "take")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-		err = queryAdmLv1GeoJsonl(ctx, dbPool, w, opt)
-		if err != nil {
-			log.Printf("Error streaming GeoJSONL: %v", err)
-			return
-		}
-	})
+	startAfterFid, err := expectIntParamInQuery(r, "startAfter")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	http.HandleFunc("/api/v1/fc/lv1", func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+	var opt GadmLvPaginationOptions
+	opt.Limit = take
+	opt.StartAfterFid = startAfterFid
 
-		take, err := expectIntParamInQuery(r, "take")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	log.Printf("geojsonl/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
 
-		startAfterFid, err := expectIntParamInQuery(r, "startAfter")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
 
-		var opt GadmLvPaginationOptions
-		opt.Limit = take
-		opt.StartAfterFid = startAfterFid
+	err = s.queryAdmLv1GeoJsonl(ctx, w, opt)
+	if err != nil {
+		log.Printf("Error streaming GeoJSONL: %v", err)
+		return
+	}
+}
+func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		log.Printf("fc/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
+	take, err := expectIntParamInQuery(r, "take")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-		featureCollectionRawMsg, err := queryAdmLv0FeatureCollection(ctx, dbPool, opt)
-		if err != nil {
-			panic(err)
-		}
+	startAfterFid, err := expectIntParamInQuery(r, "startAfter")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(featureCollectionRawMsg)
+	var opt GadmLvPaginationOptions
+	opt.Limit = take
+	opt.StartAfterFid = startAfterFid
 
-	})
+	log.Printf("fc/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	featureCollectionRawMsg, err := s.queryAdmLv0FeatureCollection(ctx, opt)
+	if err != nil {
+		panic(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(featureCollectionRawMsg)
+
 }
 
 // TODO: improve logging;
-func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.ResponseWriter, opt GadmLvPaginationOptions) error {
+func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter, opt GadmLvPaginationOptions) error {
 	sqlQuery := `
 		SELECT json_build_object(
 			'type', 'Feature',
@@ -135,7 +148,7 @@ func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.Respo
 	const MIN_LIMIT = 1
 	const MAX_LIMIT = 20
 
-	rows, err := dbPool.Query(ctx, sqlQuery, clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT), max(opt.StartAfterFid, MIN_FID))
+	rows, err := s.db.Query(ctx, sqlQuery, clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT), max(opt.StartAfterFid, MIN_FID))
 	if err != nil {
 		return fmt.Errorf("failed to query database: %w", err)
 	}
@@ -177,7 +190,7 @@ func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.Respo
 	return nil
 }
 
-func queryAdmLv0FeatureCollection(ctx context.Context, dbPool *pgxpool.Pool, opt GadmLvPaginationOptions) (json.RawMessage, error) {
+func (s *Server) queryAdmLv0FeatureCollection(ctx context.Context, opt GadmLvPaginationOptions) (json.RawMessage, error) {
 	sqlQuery := `
 			SELECT json_build_object(
 				'type', 'FeatureCollection',
@@ -206,7 +219,7 @@ func queryAdmLv0FeatureCollection(ctx context.Context, dbPool *pgxpool.Pool, opt
 	const MAX_LIMIT = 3
 
 	var featureCollectionJSON json.RawMessage
-	err := dbPool.QueryRow(ctx, sqlQuery, clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT), max(opt.StartAfterFid, MIN_FID)).Scan(&featureCollectionJSON)
+	err := s.db.QueryRow(ctx, sqlQuery, clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT), max(opt.StartAfterFid, MIN_FID)).Scan(&featureCollectionJSON)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
