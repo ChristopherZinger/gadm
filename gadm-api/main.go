@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/spf13/viper"
 )
 
 type GeoJSONFeature struct {
@@ -24,7 +25,9 @@ type GeoJSONFeatureCollection struct {
 }
 
 func main() {
-	pgUrl := os.Getenv("DATABASE_URL")
+	viper.SetConfigFile(".env")
+	viper.ReadInConfig()
+	pgUrl := viper.GetString("DATABASE_URL")
 
 	dbPool, err := pgxpool.New(context.Background(), pgUrl)
 	if err != nil {

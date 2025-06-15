@@ -2,8 +2,6 @@
 
 ## api
 
-[] get database url from .env variable
-
 [] add query parameters to /api/lv0 endpoint: "?take=10"
 
 [] check if geometry can be null according to pg definitions and if not remove geom is not null check from sql queries
