@@ -36,7 +36,7 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	http.HandleFunc("/api/v1/lv1", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/v1/geojsonl/lv1", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		take := 10
@@ -56,40 +56,53 @@ func main() {
 			}
 		}
 
-		responseFormat := r.URL.Query().Get("response-format")
-		if responseFormat != "" && responseFormat != "feature-collection" && responseFormat != "geojsonl" {
-			http.Error(
-				w,
-				"Invalid response-format parameter. Must be either 'feature-collection' or 'geojsonl'",
-				http.StatusBadRequest,
-			)
+		var opt SearchQueryOptions
+		opt.Limit = take
+		opt.Offset = offset
+
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+
+		err = queryAdmLv1GeoJsonl(ctx, dbPool, w, opt)
+		if err != nil {
+			log.Printf("Error streaming GeoJSONL: %v", err)
 			return
+		}
+	})
+
+	http.HandleFunc("/api/v1/fc/lv1", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		take := 10
+		takeStr := r.URL.Query().Get("take")
+		_take, err := strconv.Atoi(takeStr)
+		if err != nil {
+			panic(err)
+		}
+		take = _take
+
+		var offset int
+		if r.URL.Query().Has("offset") {
+			offsetStr := r.URL.Query().Get("offset")
+			offset, err = strconv.Atoi(offsetStr)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		var opt SearchQueryOptions
 		opt.Limit = take
 		opt.Offset = offset
-		opt.ResponseFormat = responseFormat
 
-		if responseFormat == "geojsonl" {
-			w.Header().Set("Content-Type", "application/x-ndjson")
-			w.Header().Set("Cache-Control", "no-cache")
-			w.Header().Set("Connection", "keep-alive")
-
-			err := queryAdmLv1GeoJsonl(ctx, dbPool, w, opt)
-			if err != nil {
-				log.Printf("Error streaming GeoJSONL: %v", err)
-				return
-			}
-		} else {
-			featureCollectionRawMsg, err := queryAdmLv0FeatureCollection(ctx, dbPool, opt)
-			if err != nil {
-				panic(err)
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(featureCollectionRawMsg)
+		featureCollectionRawMsg, err := queryAdmLv0FeatureCollection(ctx, dbPool, opt)
+		if err != nil {
+			panic(err)
 		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(featureCollectionRawMsg)
+
 	})
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
