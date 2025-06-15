@@ -107,8 +107,8 @@ func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter,
 			)
 		)
 		FROM adm_0 
-		ORDER BY fid ASC
 		WHERE fid > $2
+		ORDER BY fid ASC
 		LIMIT $1;
 	`
 
@@ -176,8 +176,8 @@ func (s *Server) queryAdmLv0FeatureCollection(ctx context.Context, opt GadmLvPag
 			FROM (
 				SELECT fid, gid_0, country, geom 
 				FROM adm_0 
-				ORDER BY fid ASC
 				WHERE fid > $2
+				ORDER BY fid ASC
 				LIMIT $1
 			) sub
 		`
