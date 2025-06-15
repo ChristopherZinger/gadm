@@ -4,6 +4,14 @@
 
 [] api endpoint tests
 
+[] add cursor (next url) value in return header
+
+[] add middleware for cors and logging
+
+[] Add more structured error handling
+
+[] Add request validation
+
 [] create router
 
 [] check if geometry can be null according to pg definitions and if not remove geom is not null check from sql queries
