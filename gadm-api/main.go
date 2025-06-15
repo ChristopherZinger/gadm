@@ -127,6 +127,7 @@ func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.Respo
 			)
 		)
 		FROM adm_0 
+		ORDER BY fid ASC
 		WHERE fid > $2
 		LIMIT $1;
 	`
@@ -195,6 +196,7 @@ func queryAdmLv0FeatureCollection(ctx context.Context, dbPool *pgxpool.Pool, opt
 			FROM (
 				SELECT fid, gid_0, country, geom 
 				FROM adm_0 
+				ORDER BY fid ASC
 				WHERE fid > $2
 				LIMIT $1
 			) sub
