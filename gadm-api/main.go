@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const MIN_FID = 0
+
 type GeoJSONFeature struct {
 	Type       string                 `json:"type"`
 	Geometry   json.RawMessage        `json:"geometry"`
@@ -22,6 +24,16 @@ type GeoJSONFeature struct {
 type GeoJSONFeatureCollection struct {
 	Type     string           `json:"type"`
 	Features []GeoJSONFeature `json:"features"`
+}
+
+type QueryParams struct {
+	Take   int
+	Offset int
+}
+
+type GadmLvPaginationOptions struct {
+	Limit         int
+	StartAfterFid int
 }
 
 func main() {
@@ -39,26 +51,23 @@ func main() {
 	http.HandleFunc("/api/v1/geojsonl/lv1", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		take := 10
-		takeStr := r.URL.Query().Get("take")
-		_take, err := strconv.Atoi(takeStr)
+		take, err := expectIntParamInQuery(r, "take")
 		if err != nil {
-			panic(err)
-		}
-		take = _take
-
-		var offset int
-		if r.URL.Query().Has("offset") {
-			offsetStr := r.URL.Query().Get("offset")
-			offset, err = strconv.Atoi(offsetStr)
-			if err != nil {
-				panic(err)
-			}
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		var opt SearchQueryOptions
+		startAfterFid, err := expectIntParamInQuery(r, "startAfter")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var opt GadmLvPaginationOptions
 		opt.Limit = take
-		opt.Offset = offset
+		opt.StartAfterFid = startAfterFid
+
+		log.Printf("geojsonl/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
 
 		w.Header().Set("Content-Type", "application/x-ndjson")
 		w.Header().Set("Cache-Control", "no-cache")
@@ -74,26 +83,23 @@ func main() {
 	http.HandleFunc("/api/v1/fc/lv1", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		take := 10
-		takeStr := r.URL.Query().Get("take")
-		_take, err := strconv.Atoi(takeStr)
+		take, err := expectIntParamInQuery(r, "take")
 		if err != nil {
-			panic(err)
-		}
-		take = _take
-
-		var offset int
-		if r.URL.Query().Has("offset") {
-			offsetStr := r.URL.Query().Get("offset")
-			offset, err = strconv.Atoi(offsetStr)
-			if err != nil {
-				panic(err)
-			}
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		var opt SearchQueryOptions
+		startAfterFid, err := expectIntParamInQuery(r, "startAfter")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var opt GadmLvPaginationOptions
 		opt.Limit = take
-		opt.Offset = offset
+		opt.StartAfterFid = startAfterFid
+
+		log.Printf("fc/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
 
 		featureCollectionRawMsg, err := queryAdmLv0FeatureCollection(ctx, dbPool, opt)
 		if err != nil {
@@ -108,14 +114,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-type SearchQueryOptions struct {
-	Limit          int
-	Offset         int
-	ResponseFormat string
-}
-
-// TODO: check for max limit and optimize offset; Also fix logging
-func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.ResponseWriter, opt SearchQueryOptions) error {
+// TODO: improve logging;
+func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.ResponseWriter, opt GadmLvPaginationOptions) error {
 	sqlQuery := `
 		SELECT json_build_object(
 			'type', 'Feature',
@@ -127,11 +127,14 @@ func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.Respo
 			)
 		)
 		FROM adm_0 
-		WHERE geom IS NOT NULL 
-		LIMIT $1 OFFSET $2;
+		WHERE fid > $2
+		LIMIT $1;
 	`
 
-	rows, err := dbPool.Query(ctx, sqlQuery, opt.Limit, opt.Offset)
+	const MIN_LIMIT = 1
+	const MAX_LIMIT = 20
+
+	rows, err := dbPool.Query(ctx, sqlQuery, clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT), max(opt.StartAfterFid, MIN_FID))
 	if err != nil {
 		return fmt.Errorf("failed to query database: %w", err)
 	}
@@ -173,7 +176,7 @@ func queryAdmLv1GeoJsonl(ctx context.Context, dbPool *pgxpool.Pool, w http.Respo
 	return nil
 }
 
-func queryAdmLv0FeatureCollection(ctx context.Context, dbPool *pgxpool.Pool, opt SearchQueryOptions) (json.RawMessage, error) {
+func queryAdmLv0FeatureCollection(ctx context.Context, dbPool *pgxpool.Pool, opt GadmLvPaginationOptions) (json.RawMessage, error) {
 	sqlQuery := `
 			SELECT json_build_object(
 				'type', 'FeatureCollection',
@@ -192,17 +195,29 @@ func queryAdmLv0FeatureCollection(ctx context.Context, dbPool *pgxpool.Pool, opt
 			FROM (
 				SELECT fid, gid_0, country, geom 
 				FROM adm_0 
-				WHERE geom IS NOT NULL 
-				LIMIT $1 OFFSET $2
+				WHERE fid > $2
+				LIMIT $1
 			) sub
 		`
 
+	const MIN_LIMIT = 1
+	const MAX_LIMIT = 3
+
 	var featureCollectionJSON json.RawMessage
-	err := dbPool.QueryRow(ctx, sqlQuery, opt.Limit, opt.Offset).Scan(&featureCollectionJSON)
+	err := dbPool.QueryRow(ctx, sqlQuery, clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT), max(opt.StartAfterFid, MIN_FID)).Scan(&featureCollectionJSON)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 
 	return featureCollectionJSON, nil
+}
+
+func expectIntParamInQuery(r *http.Request, paramName string) (int, error) {
+	paramStrVal := r.URL.Query().Get(paramName)
+	value, err := strconv.Atoi(paramStrVal)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s parameter: %w", paramName, err)
+	}
+	return value, nil
 }
