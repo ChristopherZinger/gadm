@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/Masterminds/squirrel"
 )
 
 const MIN_FID = 0
@@ -96,26 +98,34 @@ func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Reque
 
 // TODO: improve logging;
 func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter, opt GadmLvPaginationOptions) error {
-	sqlQuery := `
-		SELECT json_build_object(
-			'type', 'Feature',
-			'geometry', ST_AsGeoJSON(geom)::json,
-			'properties', json_build_object(
-				'fid', fid,
-				'gid_0', gid_0,
-				'country', country
-			)
-		)
-		FROM adm_0 
-		WHERE fid > $2
-		ORDER BY fid ASC
-		LIMIT $1;
-	`
-
 	const MIN_LIMIT = 1
 	const MAX_LIMIT = 20
 
-	rows, err := s.db.Query(ctx, sqlQuery, clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT), max(opt.StartAfterFid, MIN_FID))
+	jsonBuildObject := fmt.Sprintf(
+		`json_build_object(
+			'type', 'Feature',
+			'geometry', ST_AsGeoJSON(%[1]s)::json,
+			'properties', json_build_object(
+				'%[2]s', %[2]s,
+				'%[3]s', %[3]s,
+				'%[4]s', %[4]s
+			)
+		)`,
+		Adm0.Geometry, Adm0.FID, Adm0.GID0, Adm0.Country,
+	)
+
+	query := squirrel.Select(jsonBuildObject).
+		From(ADM_0_TABLE).
+		Where(squirrel.Expr(fmt.Sprintf("%s > $1", Adm0.FID), max(opt.StartAfterFid, MIN_FID))).
+		OrderBy(fmt.Sprintf("%s ASC", Adm0.FID)).
+		Limit(uint64(clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT)))
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build sql query: %w", err)
+	}
+
+	rows, err := s.db.Query(ctx, sql, args...)
 	if err != nil {
 		return fmt.Errorf("failed to query database: %w", err)
 	}
