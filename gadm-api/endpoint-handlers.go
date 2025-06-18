@@ -36,20 +36,22 @@ type GadmLvPaginationOptions struct {
 func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	take, err := expectIntParamInQuery(r, "take")
+	take, err := expectIntParamInQuery(r, "take", 10)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	startAfterFid, err := expectIntParamInQuery(r, "startAfter")
+	startAfterFid, err := expectIntParamInQuery(r, "startAfter", 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	const MIN_LIMIT = 1
+	const MAX_LIMIT = 20
 	var opt GadmLvPaginationOptions
-	opt.Limit = take
+	opt.Limit = clamp(take, MIN_LIMIT, MAX_LIMIT)
 	opt.StartAfterFid = startAfterFid
 
 	log.Printf("geojsonl/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
@@ -68,20 +70,22 @@ func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	take, err := expectIntParamInQuery(r, "take")
+	take, err := expectIntParamInQuery(r, "take", 3)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	startAfterFid, err := expectIntParamInQuery(r, "startAfter")
+	startAfterFid, err := expectIntParamInQuery(r, "startAfter", 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	const MIN_LIMIT = 1
+	const MAX_LIMIT = 3 // TODO: create configuration for limits per endpoint per gadm level;
 	var opt GadmLvPaginationOptions
-	opt.Limit = take
+	opt.Limit = clamp(take, MIN_LIMIT, MAX_LIMIT)
 	opt.StartAfterFid = startAfterFid
 
 	log.Printf("fc/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
@@ -98,9 +102,6 @@ func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Reque
 
 // TODO: improve logging;
 func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter, opt GadmLvPaginationOptions) error {
-	const MIN_LIMIT = 1
-	const MAX_LIMIT = 20
-
 	jsonBuildObject := fmt.Sprintf(
 		`json_build_object(
 			'type', 'Feature',
@@ -118,7 +119,7 @@ func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter,
 		From(ADM_0_TABLE).
 		Where(squirrel.Expr(fmt.Sprintf("%s > $1", Adm0.FID), max(opt.StartAfterFid, MIN_FID))).
 		OrderBy(fmt.Sprintf("%s ASC", Adm0.FID)).
-		Limit(uint64(clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT)))
+		Limit(uint64(opt.Limit))
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -155,9 +156,6 @@ func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter,
 }
 
 func (s *Server) queryAdmLv0FeatureCollection(ctx context.Context, opt GadmLvPaginationOptions) (json.RawMessage, error) {
-	const MIN_LIMIT = 1
-	const MAX_LIMIT = 3 // TODO: create configuration for limits per endpoint per gadm level;
-
 	jsonBuildObject := fmt.Sprintf(
 		`json_build_object(
 				'type', 'FeatureCollection',
@@ -180,7 +178,7 @@ func (s *Server) queryAdmLv0FeatureCollection(ctx context.Context, opt GadmLvPag
 		From(ADM_0_TABLE).
 		Where(squirrel.Expr(fmt.Sprintf("%s > $1", Adm0.FID), max(opt.StartAfterFid, MIN_FID))).
 		OrderBy(fmt.Sprintf("%s ASC", Adm0.FID)).
-		Limit(uint64(clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT)))
+		Limit(uint64(opt.Limit))
 
 	mainQuery := squirrel.Select(jsonBuildObject).FromSelect(subQuery, "sub")
 
