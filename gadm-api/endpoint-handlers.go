@@ -131,9 +131,9 @@ func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		log.Printf("Warning: ResponseWriter doesn't support flushing - data may be buffered")
+	flusher, err := NewFlusher(w, ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create flusher: %w", err)
 	}
 
 	for rows.Next() {
@@ -142,21 +142,8 @@ func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter,
 			return fmt.Errorf("failed to scan row: %w", err)
 		}
 
-		if _, err := w.Write(featureJSON); err != nil {
-			return fmt.Errorf("failed to write feature: %w", err)
-		}
-		if _, err := w.Write([]byte("\n")); err != nil {
-			return fmt.Errorf("failed to write newline: %w", err)
-		}
-
-		if flusher != nil {
-			flusher.Flush()
-		}
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
+		if err := flusher.Flush(featureJSON); err != nil {
+			return fmt.Errorf("failed to flush feature: %w", err)
 		}
 	}
 
