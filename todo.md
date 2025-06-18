@@ -10,8 +10,6 @@
 
 [] Add more structured error handling
 
-[] Ensure endpoints work when no take nor startAfter parameters are passed
-
 [] Add request validation
 
 [] check if geometry can be null according to pg definitions and if not remove geom is not null check from sql queries
