@@ -168,35 +168,42 @@ func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter,
 }
 
 func (s *Server) queryAdmLv0FeatureCollection(ctx context.Context, opt GadmLvPaginationOptions) (json.RawMessage, error) {
-	sqlQuery := `
-			SELECT json_build_object(
+	const MIN_LIMIT = 1
+	const MAX_LIMIT = 3 // TODO: create configuration for limits per endpoint per gadm level;
+
+	jsonBuildObject := fmt.Sprintf(
+		`json_build_object(
 				'type', 'FeatureCollection',
 				'features', json_agg(
 					json_build_object(
 						'type', 'Feature',
-						'geometry', ST_AsGeoJSON(geom)::json,
+						'geometry', ST_AsGeoJSON(%[1]s)::json,
 						'properties', json_build_object(
-							'fid', fid,
-							'gid_0', gid_0,
-							'country', country
+							'%[2]s', %[2]s,
+							'%[3]s', %[3]s,
+							'%[4]s', %[4]s
 						)
 					)
 				)
-			) as feature_collection
-			FROM (
-				SELECT fid, gid_0, country, geom 
-				FROM adm_0 
-				WHERE fid > $2
-				ORDER BY fid ASC
-				LIMIT $1
-			) sub
-		`
+			)`,
+		Adm0.Geometry, Adm0.FID, Adm0.GID0, Adm0.Country,
+	)
 
-	const MIN_LIMIT = 1
-	const MAX_LIMIT = 3
+	subQuery := squirrel.Select(fmt.Sprintf("%s, %s, %s, %s", Adm0.FID, Adm0.GID0, Adm0.Country, Adm0.Geometry)).
+		From(ADM_0_TABLE).
+		Where(squirrel.Expr(fmt.Sprintf("%s > $1", Adm0.FID), max(opt.StartAfterFid, MIN_FID))).
+		OrderBy(fmt.Sprintf("%s ASC", Adm0.FID)).
+		Limit(uint64(clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT)))
+
+	mainQuery := squirrel.Select(jsonBuildObject).FromSelect(subQuery, "sub")
+
+	sql, args, err := mainQuery.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql query: %w", err)
+	}
 
 	var featureCollectionJSON json.RawMessage
-	err := s.db.QueryRow(ctx, sqlQuery, clamp(opt.Limit, MIN_LIMIT, MAX_LIMIT), max(opt.StartAfterFid, MIN_FID)).Scan(&featureCollectionJSON)
+	err = s.db.QueryRow(ctx, sql, args...).Scan(&featureCollectionJSON)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
