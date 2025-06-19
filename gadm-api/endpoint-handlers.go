@@ -102,17 +102,14 @@ func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Reque
 
 // TODO: improve logging;
 func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter, paginationParams PaginationParams) error {
+	jsonBuildObjectProperties := buildGeojsonFeaturePropertiesSqlExpression(Adm0.FID, Adm0.GID0, Adm0.Country)
 	jsonBuildObject := fmt.Sprintf(
 		`json_build_object(
 			'type', 'Feature',
 			'geometry', ST_AsGeoJSON(%[1]s)::json,
-			'properties', json_build_object(
-				'%[2]s', %[2]s,
-				'%[3]s', %[3]s,
-				'%[4]s', %[4]s
-			)
+			'properties', %[2]s
 		)`,
-		Adm0.Geometry, Adm0.FID, Adm0.GID0, Adm0.Country,
+		Adm0.Geometry, jsonBuildObjectProperties,
 	)
 
 	query := squirrel.Select(jsonBuildObject).
@@ -194,4 +191,17 @@ func (s *Server) queryAdmLv0FeatureCollection(ctx context.Context, paginationPar
 	}
 
 	return featureCollectionJSON, nil
+}
+
+func buildGeojsonFeaturePropertiesSqlExpression(columns ...string) string {
+	v := "json_build_object("
+	len := len(columns)
+	for i, column := range columns {
+		v += fmt.Sprintf("'%s', %s", column, column)
+		if i < len-1 {
+			v += ", "
+		}
+	}
+	v += ")"
+	return v
 }
