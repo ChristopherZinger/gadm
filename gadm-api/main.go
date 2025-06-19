@@ -31,6 +31,8 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v1/geojsonl/lv1", server.handleGeoJsonlLv1)
+	mux.HandleFunc("/api/v1/geojsonl/lv2", server.handleGeoJsonlLv2)
+
 	mux.HandleFunc("/api/v1/fc/lv1", server.handleFeatureCollectionLv1)
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
