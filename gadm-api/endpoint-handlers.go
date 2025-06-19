@@ -33,6 +33,16 @@ type GadmLvPaginationOptions struct {
 	StartAfterFid int
 }
 
+func setGeojsonlStreamingResponseHeaders(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+}
+
+func setFeatureCollectionResponseHeaders(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+}
+
 func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -56,9 +66,7 @@ func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("geojsonl/lv1. take: %d, startAfterFid: %d", take, startAfterFid)
 
-	w.Header().Set("Content-Type", "application/x-ndjson")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
+	setGeojsonlStreamingResponseHeaders(w)
 
 	err = s.queryAdmLv1GeoJsonl(ctx, w, opt)
 	if err != nil {
@@ -95,7 +103,7 @@ func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Reque
 		panic(err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	setFeatureCollectionResponseHeaders(w)
 	w.Write(featureCollectionRawMsg)
 
 }
