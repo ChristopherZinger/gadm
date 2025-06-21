@@ -2,6 +2,8 @@ source/geopackage_all_layers
 .DS_Store
 .env
 
+gadm-api/tmp
+
 pg-ingest-source/pg-data
 raspberrypi/connectssh.sh
 

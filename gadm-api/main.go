@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
 )
 
 type Server struct {
@@ -16,9 +16,16 @@ type Server struct {
 }
 
 func main() {
-	viper.SetConfigFile(".env")
-	viper.ReadInConfig()
-	pgUrl := viper.GetString("DATABASE_URL")
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: Could not load .env file: %v", err)
+		log.Printf("Make sure .env file exists in the project root directory")
+		return
+	}
+
+	pgUrl := os.Getenv("DATABASE_URL")
+	if pgUrl == "" {
+		log.Fatal("DATABASE_URL not found in .env file or environment variables")
+	}
 
 	dbPool, err := pgxpool.New(context.Background(), pgUrl)
 	if err != nil {

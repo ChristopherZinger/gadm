@@ -6,7 +6,9 @@
 
 [] add cursor (next url) value in return header
 
-[] add middleware for cors and logging
+[] add middleware for cors and logging ! a class with "WARN, ERROR, DEBUG, INFO" messages
+
+[] fix confused naming between lv1 and lv 2
 
 [] Add more structured error handling
 
