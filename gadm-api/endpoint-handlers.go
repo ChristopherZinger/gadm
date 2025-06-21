@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
+
+	"gadm-api/logger"
 
 	"github.com/Masterminds/squirrel"
 )
@@ -59,6 +60,7 @@ func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 
 	paginationParams, err := getPaginationParams(r)
 	if err != nil {
+		logger.Error("failed_to_get_pagination_params %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -72,7 +74,7 @@ func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 
 	err = s.queryAdmLv1GeoJsonl(ctx, w, paginationParams)
 	if err != nil {
-		log.Printf("Error streaming GeoJSONL: %v", err)
+		logger.Error("failed_to_stream_geojsonl %v", err)
 		return
 	}
 }
@@ -82,7 +84,7 @@ func (s *Server) handleGeoJsonlLv2(w http.ResponseWriter, r *http.Request) {
 
 	paginationParams, err := getPaginationParams(r)
 	if err != nil {
-		log.Printf("Error getting pagination params: %v", err)
+		logger.Error("failed_to_get_pagination_params %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -95,7 +97,7 @@ func (s *Server) handleGeoJsonlLv2(w http.ResponseWriter, r *http.Request) {
 
 	err = s.queryAdmLv2GeoJsonl(ctx, w, paginationParams)
 	if err != nil {
-		log.Printf("Error streaming GeoJSONL: %v", err)
+		logger.Error("failed_to_stream_geojsonl %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -124,32 +126,38 @@ func (s *Server) queryAdmLv2GeoJsonl(ctx context.Context, w http.ResponseWriter,
 
 	sql, args, err := query.ToSql()
 	if err != nil {
+		logger.Error("failed_to_build_sql_query %v", err)
 		return fmt.Errorf("failed to build sql query: %w", err)
 	}
 
 	rows, err := s.db.Query(ctx, sql, args...)
 	if err != nil {
+		logger.Error("failed_to_query_database %v", err)
 		return fmt.Errorf("failed to query database: %w", err)
 	}
 	defer rows.Close()
 
 	flusher, err := NewFlusher(w, ctx)
 	if err != nil {
+		logger.Error("failed_to_create_flusher %v", err)
 		return fmt.Errorf("failed to create flusher: %w", err)
 	}
 
 	for rows.Next() {
 		var featureJSON json.RawMessage
 		if err := rows.Scan(&featureJSON); err != nil {
+			logger.Error("failed_to_scan_row %v", err)
 			return fmt.Errorf("failed to scan row: %w", err)
 		}
 
 		if err := flusher.Flush(featureJSON); err != nil {
+			logger.Error("failed_to_flush_feature %v", err)
 			return fmt.Errorf("failed to flush feature: %w", err)
 		}
 	}
 
 	if err := rows.Err(); err != nil {
+		logger.Error("failed_to_iterate_rows %v", err)
 		return fmt.Errorf("row iteration error: %w", err)
 	}
 
@@ -161,6 +169,7 @@ func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Reque
 
 	paginationParams, err := getPaginationParams(r)
 	if err != nil {
+		logger.Error("failed_to_get_pagination_params %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -171,6 +180,7 @@ func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Reque
 
 	featureCollectionRawMsg, err := s.queryAdmLv0FeatureCollection(ctx, paginationParams)
 	if err != nil {
+		logger.Error("failed_to_query_feature_collection %v", err)
 		panic(err)
 	}
 
@@ -199,32 +209,38 @@ func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter,
 
 	sql, args, err := query.ToSql()
 	if err != nil {
+		logger.Error("failed_to_build_sql_query %v", err)
 		return fmt.Errorf("failed to build sql query: %w", err)
 	}
 
 	rows, err := s.db.Query(ctx, sql, args...)
 	if err != nil {
+		logger.Error("failed_to_query_database %v", err)
 		return fmt.Errorf("failed to query database: %w", err)
 	}
 	defer rows.Close()
 
 	flusher, err := NewFlusher(w, ctx)
 	if err != nil {
+		logger.Error("failed_to_create_flusher %v", err)
 		return fmt.Errorf("failed to create flusher: %w", err)
 	}
 
 	for rows.Next() {
 		var featureJSON json.RawMessage
 		if err := rows.Scan(&featureJSON); err != nil {
+			logger.Error("failed_to_scan_row %v", err)
 			return fmt.Errorf("failed to scan row: %w", err)
 		}
 
 		if err := flusher.Flush(featureJSON); err != nil {
+			logger.Error("failed_to_flush_feature %v", err)
 			return fmt.Errorf("failed to flush feature: %w", err)
 		}
 	}
 
 	if err := rows.Err(); err != nil {
+		logger.Error("failed_to_iterate_rows %v", err)
 		return fmt.Errorf("row iteration error: %w", err)
 	}
 
@@ -260,12 +276,14 @@ func (s *Server) queryAdmLv0FeatureCollection(ctx context.Context, paginationPar
 
 	sql, args, err := mainQuery.ToSql()
 	if err != nil {
+		logger.Error("failed_to_build_sql_query %v", err)
 		return nil, fmt.Errorf("failed to build sql query: %w", err)
 	}
 
 	var featureCollectionJSON json.RawMessage
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&featureCollectionJSON)
 	if err != nil {
+		logger.Error("failed_to_query_database %v", err)
 		return nil, fmt.Errorf("failed to query database: %w", err)
 	}
 

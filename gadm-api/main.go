@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+
+	"gadm-api/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -15,21 +16,22 @@ type Server struct {
 	db *pgxpool.Pool
 }
 
+var DATABASE_URL_ENV_VAR = "DATABASE_URL"
+
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Printf("Warning: Could not load .env file: %v", err)
-		log.Printf("Make sure .env file exists in the project root directory")
+		logger.Warning("could_not_load_env_file %v", err)
 		return
 	}
 
-	pgUrl := os.Getenv("DATABASE_URL")
+	pgUrl := os.Getenv(DATABASE_URL_ENV_VAR)
 	if pgUrl == "" {
-		log.Fatal("DATABASE_URL not found in .env file or environment variables")
+		logger.Fatal("missing_db_url_env_variable %s", DATABASE_URL_ENV_VAR) // TODO: expect var from config file util
 	}
 
 	dbPool, err := pgxpool.New(context.Background(), pgUrl)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		logger.Error("failed_to_connect_to_database %v", err)
 		os.Exit(1)
 	}
 	defer dbPool.Close()
@@ -42,6 +44,7 @@ func main() {
 
 	mux.HandleFunc("/api/v1/fc/lv1", server.handleFeatureCollectionLv1)
 
+	logger.Info("server_starting_on_port_8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }
 
