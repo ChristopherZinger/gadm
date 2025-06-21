@@ -44,8 +44,10 @@ func main() {
 
 	mux.HandleFunc("/api/v1/fc/lv1", server.handleFeatureCollectionLv1)
 
+	handler := LoggingMiddleware(mux)
+
 	logger.Info("server_starting_on_port_8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
 
 func newServer(db *pgxpool.Pool) *Server {
