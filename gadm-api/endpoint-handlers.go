@@ -30,6 +30,53 @@ type PaginationParams struct {
 	StartAfterFid int
 }
 
+type GeojsonlHandlerInfo struct {
+	queryParams GeoJsonFeatureSqlQueryParams
+	queryLimits QueryLimits
+}
+
+type QueryLimits struct {
+	minLimit int
+	maxLimit int
+}
+
+type GadmLevel int
+
+const (
+	GadmLevel0 GadmLevel = iota
+	GadmLevel1
+	GadmLevel2
+	GadmLevel3
+	GadmLevel4
+	GadmLevel5
+)
+
+var supportedGadmLevels = []GadmLevel{GadmLevel0, GadmLevel1}
+
+var geojsonEndpointInfo = map[GadmLevel]GeojsonlHandlerInfo{
+	GadmLevel0: {
+		queryParams: GeoJsonFeatureSqlQueryParams{
+			TableName:              ADM_0_TABLE,
+			FeaturePropertiesNames: []string{Adm0.FID, Adm0.GID0, Adm0.Country},
+			GeometryColumnName:     Adm0.Geometry,
+			OrderByColumnName:      Adm0.FID,
+		},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+	},
+	GadmLevel1: {
+		queryParams: GeoJsonFeatureSqlQueryParams{
+			TableName: ADM_1_TABLE,
+			FeaturePropertiesNames: []string{Adm1.FID, Adm1.GID0, Adm1.Country,
+				Adm1.GID1, Adm1.Name1, Adm1.Varname1, Adm1.NlName1, Adm1.Type1,
+				Adm1.Engtype1, Adm1.Cc1, Adm1.Hasc1, Adm1.Iso1,
+			},
+			GeometryColumnName: Adm1.Geometry,
+			OrderByColumnName:  Adm1.FID,
+		},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+	},
+}
+
 func getPaginationParams(r *http.Request) (PaginationParams, error) {
 	take, err := expectIntParamInQuery(r, "take", 10)
 	if err != nil {
@@ -56,7 +103,24 @@ func setFeatureCollectionResponseHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
-func (s *Server) handleGeoJsonlLv0(w http.ResponseWriter, r *http.Request) {
+type HandlerInfo struct {
+	url     string
+	handler func(w http.ResponseWriter, r *http.Request)
+}
+
+func CreateGeojsonlHandlers(s *Server) ([]HandlerInfo, error) {
+	handlerInfos := []HandlerInfo{}
+	for _, gadmLevel := range supportedGadmLevels {
+		url := fmt.Sprintf("/api/v1/geojsonl/lv%d", gadmLevel)
+		handler := func(w http.ResponseWriter, r *http.Request) {
+			s.handleGeoJsonl(w, r, gadmLevel)
+		}
+		handlerInfos = append(handlerInfos, HandlerInfo{url: url, handler: handler})
+	}
+	return handlerInfos, nil
+}
+
+func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLevel GadmLevel) {
 	ctx := r.Context()
 
 	paginationParams, err := getPaginationParams(r)
@@ -66,55 +130,20 @@ func (s *Server) handleGeoJsonlLv0(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	const MIN_LIMIT = 1
-	const MAX_LIMIT = 20
-
 	setGeojsonlStreamingResponseHeaders(w)
 
+	params := geojsonEndpointInfo[gadmLevel].queryParams
+	limits := geojsonEndpointInfo[gadmLevel].queryLimits
 	err = s.queryAdmGeoJsonl(ctx, w, GeoJsonFeatureSqlQueryParams{
-		TableName:              ADM_0_TABLE,
-		FeaturePropertiesNames: []string{Adm0.FID, Adm0.GID0, Adm0.Country},
-		GeometryColumnName:     Adm0.Geometry,
-		OrderByColumnName:      Adm0.FID,
+		TableName:              params.TableName,
+		FeaturePropertiesNames: params.FeaturePropertiesNames,
+		GeometryColumnName:     params.GeometryColumnName,
+		OrderByColumnName:      params.OrderByColumnName,
 		StartAfterValue:        paginationParams.StartAfterFid,
-		LimitValue:             clamp(paginationParams.Limit, MIN_LIMIT, MAX_LIMIT),
+		LimitValue:             clamp(paginationParams.Limit, limits.minLimit, limits.maxLimit),
 	})
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)
-		return
-	}
-}
-
-func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	paginationParams, err := getPaginationParams(r)
-	if err != nil {
-		logger.Error("failed_to_get_pagination_params %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	const MIN_LIMIT = 1
-	const MAX_LIMIT = 20
-
-	setGeojsonlStreamingResponseHeaders(w)
-
-	err = s.queryAdmGeoJsonl(ctx, w, GeoJsonFeatureSqlQueryParams{
-		TableName: ADM_1_TABLE,
-		FeaturePropertiesNames: []string{Adm1.FID, Adm1.GID0, Adm1.Country,
-			Adm1.GID1, Adm1.Name1, Adm1.Varname1, Adm1.NlName1, Adm1.Type1,
-			Adm1.Engtype1, Adm1.Cc1, Adm1.Hasc1, Adm1.Iso1,
-		},
-		GeometryColumnName: Adm1.Geometry,
-		OrderByColumnName:  Adm1.FID,
-		StartAfterValue:    paginationParams.StartAfterFid,
-		LimitValue:         clamp(paginationParams.Limit, MIN_LIMIT, MAX_LIMIT),
-	})
-
-	if err != nil {
-		logger.Error("failed_to_stream_geojsonl %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 }

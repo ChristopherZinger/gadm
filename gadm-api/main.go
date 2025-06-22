@@ -39,8 +39,10 @@ func main() {
 	server := newServer(dbPool)
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/api/v1/geojsonl/lv0", server.handleGeoJsonlLv0)
-	mux.HandleFunc("/api/v1/geojsonl/lv1", server.handleGeoJsonlLv1)
+	geojsonlHandlers, err := CreateGeojsonlHandlers(server)
+	for _, handlerInfo := range geojsonlHandlers {
+		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
+	}
 
 	mux.HandleFunc("/api/v1/fc/lv0", server.handleFeatureCollectionLv0)
 
