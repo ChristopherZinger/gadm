@@ -51,7 +51,7 @@ const (
 	GadmLevel5
 )
 
-var supportedGadmLevels = []GadmLevel{GadmLevel0, GadmLevel1}
+var supportedGadmLevels = []GadmLevel{GadmLevel0, GadmLevel1, GadmLevel2, GadmLevel3, GadmLevel4, GadmLevel5}
 
 var geojsonEndpointInfo = map[GadmLevel]GeojsonlHandlerInfo{
 	GadmLevel0: {
@@ -72,6 +72,59 @@ var geojsonEndpointInfo = map[GadmLevel]GeojsonlHandlerInfo{
 			},
 			GeometryColumnName: Adm1.Geometry,
 			OrderByColumnName:  Adm1.FID,
+		},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+	},
+	GadmLevel2: {
+		queryParams: GeoJsonFeatureSqlQueryParams{
+			TableName: ADM_2_TABLE,
+			FeaturePropertiesNames: []string{Adm2.FID, Adm2.GID0, Adm2.Country,
+				Adm2.GID1, Adm2.Name1, Adm2.NlName1, Adm2.GID2, Adm2.Name2,
+				Adm2.Varname2, Adm2.NlName2, Adm2.Type2, Adm2.Engtype2, Adm2.Cc2,
+				Adm2.Hasc2,
+			},
+			GeometryColumnName: Adm2.Geometry,
+			OrderByColumnName:  Adm2.FID,
+		},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+	},
+	GadmLevel3: {
+		queryParams: GeoJsonFeatureSqlQueryParams{
+			TableName: ADM_3_TABLE,
+			FeaturePropertiesNames: []string{Adm3.FID, Adm3.GID0, Adm3.Country,
+				Adm3.GID1, Adm3.Name1, Adm3.NlName1, Adm3.GID2, Adm3.Name2,
+				Adm3.NlName2, Adm3.GID3, Adm3.Name3, Adm3.Varname3,
+				Adm3.NlName3, Adm3.Type3, Adm3.Engtype3, Adm3.Cc3,
+				Adm3.Hasc3,
+			},
+			GeometryColumnName: Adm3.Geometry,
+			OrderByColumnName:  Adm3.FID,
+		},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+	},
+	GadmLevel4: {
+		queryParams: GeoJsonFeatureSqlQueryParams{
+			TableName: ADM_4_TABLE,
+			FeaturePropertiesNames: []string{Adm4.FID, Adm4.GID0, Adm4.Country,
+				Adm4.GID1, Adm4.Name1, Adm4.GID2, Adm4.Name2, Adm4.GID3,
+				Adm4.Name3, Adm4.GID4, Adm4.Name4, Adm4.Varname4, Adm4.Type4,
+				Adm4.Engtype4, Adm4.Cc4,
+			},
+			GeometryColumnName: Adm4.Geometry,
+			OrderByColumnName:  Adm4.FID,
+		},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+	},
+	GadmLevel5: {
+		queryParams: GeoJsonFeatureSqlQueryParams{
+			TableName: ADM_5_TABLE,
+			FeaturePropertiesNames: []string{Adm5.FID, Adm5.GID0, Adm5.Country,
+				Adm5.GID1, Adm5.Name1, Adm5.GID2, Adm5.Name2, Adm5.GID3,
+				Adm5.Name3, Adm5.GID4, Adm5.Name4, Adm5.GID5, Adm5.Name5,
+				Adm5.Type5, Adm5.Engtype5, Adm5.Cc5,
+			},
+			GeometryColumnName: Adm5.Geometry,
+			OrderByColumnName:  Adm5.FID,
 		},
 		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
 	},
