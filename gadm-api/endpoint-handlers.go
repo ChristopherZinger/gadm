@@ -55,7 +55,7 @@ func setFeatureCollectionResponseHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
-func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGeoJsonlLv0(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	paginationParams, err := getPaginationParams(r)
@@ -72,14 +72,14 @@ func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 
 	setGeojsonlStreamingResponseHeaders(w)
 
-	err = s.queryAdmLv1GeoJsonl(ctx, w, paginationParams)
+	err = s.queryAdmLv0GeoJsonl(ctx, w, paginationParams)
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)
 		return
 	}
 }
 
-func (s *Server) handleGeoJsonlLv2(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleGeoJsonlLv1(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	paginationParams, err := getPaginationParams(r)
@@ -95,7 +95,7 @@ func (s *Server) handleGeoJsonlLv2(w http.ResponseWriter, r *http.Request) {
 
 	setGeojsonlStreamingResponseHeaders(w)
 
-	err = s.queryAdmLv2GeoJsonl(ctx, w, paginationParams)
+	err = s.queryAdmLv1GeoJsonl(ctx, w, paginationParams)
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -103,7 +103,7 @@ func (s *Server) handleGeoJsonlLv2(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) queryAdmLv2GeoJsonl(ctx context.Context, w http.ResponseWriter, paginationParams PaginationParams) error {
+func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter, paginationParams PaginationParams) error {
 	featurePropertiesSqlExpr := buildGeojsonFeaturePropertiesSqlExpression(
 		Adm1.FID, Adm1.GID0, Adm1.Country, Adm1.GID1, Adm1.Name1, Adm1.Varname1,
 		Adm1.NlName1, Adm1.Type1, Adm1.Engtype1, Adm1.Cc1, Adm1.Hasc1,
@@ -164,7 +164,7 @@ func (s *Server) queryAdmLv2GeoJsonl(ctx context.Context, w http.ResponseWriter,
 	return nil
 }
 
-func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleFeatureCollectionLv0(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	paginationParams, err := getPaginationParams(r)
@@ -190,7 +190,7 @@ func (s *Server) handleFeatureCollectionLv1(w http.ResponseWriter, r *http.Reque
 }
 
 // TODO: improve logging;
-func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter, paginationParams PaginationParams) error {
+func (s *Server) queryAdmLv0GeoJsonl(ctx context.Context, w http.ResponseWriter, paginationParams PaginationParams) error {
 	jsonBuildObjectProperties := buildGeojsonFeaturePropertiesSqlExpression(Adm0.FID, Adm0.GID0, Adm0.Country)
 	jsonBuildObject := fmt.Sprintf(
 		`json_build_object(
