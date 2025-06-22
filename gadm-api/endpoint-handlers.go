@@ -9,6 +9,7 @@ import (
 	"gadm-api/logger"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 )
 
 const MIN_FID = 0
@@ -137,28 +138,10 @@ func (s *Server) queryAdmLv1GeoJsonl(ctx context.Context, w http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	flusher, err := NewFlusher(w, ctx)
+	err = streamRows(rows, w, ctx)
 	if err != nil {
-		logger.Error("failed_to_create_flusher %v", err)
-		return fmt.Errorf("failed to create flusher: %w", err)
-	}
-
-	for rows.Next() {
-		var featureJSON json.RawMessage
-		if err := rows.Scan(&featureJSON); err != nil {
-			logger.Error("failed_to_scan_row %v", err)
-			return fmt.Errorf("failed to scan row: %w", err)
-		}
-
-		if err := flusher.Flush(featureJSON); err != nil {
-			logger.Error("failed_to_flush_feature %v", err)
-			return fmt.Errorf("failed to flush feature: %w", err)
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		logger.Error("failed_to_iterate_rows %v", err)
-		return fmt.Errorf("row iteration error: %w", err)
+		logger.Error("failed_to_stream_rows %v", err)
+		return fmt.Errorf("failed to stream rows: %w", err)
 	}
 
 	return nil
@@ -220,28 +203,10 @@ func (s *Server) queryAdmLv0GeoJsonl(ctx context.Context, w http.ResponseWriter,
 	}
 	defer rows.Close()
 
-	flusher, err := NewFlusher(w, ctx)
+	err = streamRows(rows, w, ctx)
 	if err != nil {
-		logger.Error("failed_to_create_flusher %v", err)
-		return fmt.Errorf("failed to create flusher: %w", err)
-	}
-
-	for rows.Next() {
-		var featureJSON json.RawMessage
-		if err := rows.Scan(&featureJSON); err != nil {
-			logger.Error("failed_to_scan_row %v", err)
-			return fmt.Errorf("failed to scan row: %w", err)
-		}
-
-		if err := flusher.Flush(featureJSON); err != nil {
-			logger.Error("failed_to_flush_feature %v", err)
-			return fmt.Errorf("failed to flush feature: %w", err)
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		logger.Error("failed_to_iterate_rows %v", err)
-		return fmt.Errorf("row iteration error: %w", err)
+		logger.Error("failed_to_stream_rows %v", err)
+		return fmt.Errorf("failed to stream rows: %w", err)
 	}
 
 	return nil
@@ -301,4 +266,32 @@ func buildGeojsonFeaturePropertiesSqlExpression(columns ...string) string {
 	}
 	v += ")"
 	return v
+}
+
+func streamRows(rows pgx.Rows, w http.ResponseWriter, ctx context.Context) error {
+	flusher, err := NewFlusher(w, ctx)
+	if err != nil {
+		logger.Error("failed_to_create_flusher %v", err)
+		return fmt.Errorf("failed to create flusher: %w", err)
+	}
+
+	for rows.Next() {
+		var featureJSON json.RawMessage
+		if err := rows.Scan(&featureJSON); err != nil {
+			logger.Error("failed_to_scan_row %v", err)
+			return fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		if err := flusher.Flush(featureJSON); err != nil {
+			logger.Error("failed_to_flush_feature %v", err)
+			return fmt.Errorf("failed to flush feature: %w", err)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		logger.Error("failed_to_iterate_rows %v", err)
+		return fmt.Errorf("row iteration error: %w", err)
+	}
+
+	return nil
 }
