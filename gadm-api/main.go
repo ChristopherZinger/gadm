@@ -42,7 +42,7 @@ func main() {
 	mux.HandleFunc("/api/v1/geojsonl/lv0", server.handleGeoJsonlLv0)
 	mux.HandleFunc("/api/v1/geojsonl/lv1", server.handleGeoJsonlLv1)
 
-	mux.HandleFunc("/api/v1/fc/lv1", server.handleFeatureCollectionLv0)
+	mux.HandleFunc("/api/v1/fc/lv0", server.handleFeatureCollectionLv0)
 
 	handler := LoggingMiddleware(mux)
 
