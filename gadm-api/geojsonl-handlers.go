@@ -39,7 +39,7 @@ const (
 	GadmLevel5
 )
 
-var supportedGadmLevels = []GadmLevel{GadmLevel0, GadmLevel1, GadmLevel2, GadmLevel3, GadmLevel4, GadmLevel5}
+var supportedGadmLevelsForGeojsonl = []GadmLevel{GadmLevel0, GadmLevel1, GadmLevel2, GadmLevel3, GadmLevel4, GadmLevel5}
 
 var geojsonEndpointInfo = map[GadmLevel]GeojsonlHandlerInfo{
 	GadmLevel0: {
@@ -147,7 +147,7 @@ type HandlerInfo struct {
 
 func CreateGeojsonlHandlers(s *Server) ([]HandlerInfo, error) {
 	handlerInfos := []HandlerInfo{}
-	for _, gadmLevel := range supportedGadmLevels {
+	for _, gadmLevel := range supportedGadmLevelsForGeojsonl {
 		url := fmt.Sprintf("/api/v1/geojsonl/lv%d", gadmLevel)
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			s.handleGeoJsonl(w, r, gadmLevel)

@@ -90,13 +90,15 @@ var featureCollectionEndpointInfo = map[GadmLevel]FeatureCollectionHandlerInfo{
 	},
 }
 
+var supportedGadmLevelsForFeatureCollection = []GadmLevel{GadmLevel0, GadmLevel1, GadmLevel2, GadmLevel3, GadmLevel4, GadmLevel5}
+
 func setFeatureCollectionResponseHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
 func CreateFeatureCollectionHandlers(s *Server) ([]HandlerInfo, error) {
 	handlerInfos := []HandlerInfo{}
-	for _, gadmLevel := range supportedGadmLevels {
+	for _, gadmLevel := range supportedGadmLevelsForFeatureCollection {
 		url := fmt.Sprintf("/api/v1/fc/lv%d", gadmLevel)
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			s.featureCollectionEndpointHandler(w, r, gadmLevel)
