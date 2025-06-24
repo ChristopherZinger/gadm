@@ -13,17 +13,6 @@ import (
 
 const MIN_FID = 0
 
-type GeoJSONFeature struct {
-	Type       string                 `json:"type"`
-	Geometry   json.RawMessage        `json:"geometry"`
-	Properties map[string]interface{} `json:"properties"`
-}
-
-type GeoJSONFeatureCollection struct {
-	Type     string           `json:"type"`
-	Features []GeoJSONFeature `json:"features"`
-}
-
 type PaginationParams struct {
 	Limit         int
 	StartAfterFid int
