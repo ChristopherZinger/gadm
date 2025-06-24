@@ -44,7 +44,10 @@ func main() {
 		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
 	}
 
-	mux.HandleFunc("/api/v1/fc/lv0", server.handleFeatureCollectionLv0)
+	featureCollectionHandlers, err := CreateFeatureCollectionHandlers(server)
+	for _, handlerInfo := range featureCollectionHandlers {
+		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
+	}
 
 	handler := LoggingMiddleware(mux)
 

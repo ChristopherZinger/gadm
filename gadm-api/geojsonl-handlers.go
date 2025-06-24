@@ -8,7 +8,6 @@ import (
 
 	"gadm-api/logger"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -152,10 +151,6 @@ func setGeojsonlStreamingResponseHeaders(w http.ResponseWriter) {
 	w.Header().Set("Connection", "keep-alive")
 }
 
-func setFeatureCollectionResponseHeaders(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-}
-
 type HandlerInfo struct {
 	url     string
 	handler func(w http.ResponseWriter, r *http.Request)
@@ -201,33 +196,8 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 	}
 }
 
-func (s *Server) handleFeatureCollectionLv0(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	paginationParams, err := getPaginationParams(r)
-	if err != nil {
-		logger.Error("failed_to_get_pagination_params %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	const MIN_LIMIT = 1
-	const MAX_LIMIT = 3 // TODO: create configuration for limits per endpoint per gadm level;
-	paginationParams.Limit = clamp(paginationParams.Limit, MIN_LIMIT, MAX_LIMIT)
-
-	featureCollectionRawMsg, err := s.queryAdmLv0FeatureCollection(ctx, paginationParams)
-	if err != nil {
-		logger.Error("failed_to_query_feature_collection %v", err)
-		panic(err)
-	}
-
-	setFeatureCollectionResponseHeaders(w)
-	w.Write(featureCollectionRawMsg)
-
-}
-
 func (s *Server) queryAdmGeoJsonl(ctx context.Context, w http.ResponseWriter, queryParams GeoJsonFeatureSqlQueryParams) error {
-	sql, args, err := buildGeojsonFeatureSqlExpression(queryParams)
+	sql, args, err := buildGeojsonFeatureSqlQuery(queryParams)
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
 		return fmt.Errorf("failed to build sql query: %w", err)
@@ -247,100 +217,6 @@ func (s *Server) queryAdmGeoJsonl(ctx context.Context, w http.ResponseWriter, qu
 	}
 
 	return nil
-}
-
-func (s *Server) queryAdmLv0FeatureCollection(ctx context.Context, paginationParams PaginationParams) (json.RawMessage, error) {
-	jsonBuildObject := fmt.Sprintf(
-		`json_build_object(
-				'type', 'FeatureCollection',
-				'features', json_agg(
-					json_build_object(
-						'type', 'Feature',
-						'geometry', ST_AsGeoJSON(%[1]s)::json,
-						'properties', json_build_object(
-							'%[2]s', %[2]s,
-							'%[3]s', %[3]s,
-							'%[4]s', %[4]s
-						)
-					)
-				)
-			)`,
-		Adm0.Geometry, Adm0.FID, Adm0.GID0, Adm0.Country,
-	)
-
-	subQuery := squirrel.Select(fmt.Sprintf("%s, %s, %s, %s", Adm0.FID, Adm0.GID0, Adm0.Country, Adm0.Geometry)).
-		From(ADM_0_TABLE).
-		Where(squirrel.Expr(fmt.Sprintf("%s > $1", Adm0.FID), max(paginationParams.StartAfterFid, MIN_FID))).
-		OrderBy(fmt.Sprintf("%s ASC", Adm0.FID)).
-		Limit(uint64(paginationParams.Limit))
-
-	mainQuery := squirrel.Select(jsonBuildObject).FromSelect(subQuery, "sub")
-
-	sql, args, err := mainQuery.ToSql()
-	if err != nil {
-		logger.Error("failed_to_build_sql_query %v", err)
-		return nil, fmt.Errorf("failed to build sql query: %w", err)
-	}
-
-	var featureCollectionJSON json.RawMessage
-	err = s.db.QueryRow(ctx, sql, args...).Scan(&featureCollectionJSON)
-	if err != nil {
-		logger.Error("failed_to_query_database %v", err)
-		return nil, fmt.Errorf("failed to query database: %w", err)
-	}
-
-	return featureCollectionJSON, nil
-}
-
-type GeoJsonFeatureSqlQueryParams struct {
-	TableName              string
-	FeaturePropertiesNames []string
-	GeometryColumnName     string
-	OrderByColumnName      string // This has to be a integer column!
-	StartAfterValue        int
-	LimitValue             int
-}
-
-func buildGeojsonFeatureSqlExpression(
-	params GeoJsonFeatureSqlQueryParams,
-) (string, []interface{}, error) {
-	featurePropertiesSqlExpr := buildGeojsonFeaturePropertiesSqlExpression(
-		params.FeaturePropertiesNames...,
-	)
-
-	jsonBuildObjectFeature := fmt.Sprintf(
-		`json_build_object(
-			'type', 'Feature',
-			'geometry', ST_AsGeoJSON(%[1]s)::json,
-			'properties', %[2]s
-		)`, params.GeometryColumnName, featurePropertiesSqlExpr,
-	)
-
-	query := squirrel.Select(jsonBuildObjectFeature).
-		From(params.TableName).
-		Where(squirrel.Expr(fmt.Sprintf("%s > $1", params.OrderByColumnName), params.StartAfterValue)).
-		OrderBy(fmt.Sprintf("%s ASC", params.OrderByColumnName)).
-		Limit(uint64(params.LimitValue))
-
-	sql, args, err := query.ToSql()
-	if err != nil {
-		logger.Error("failed_to_build_sql_query %v", err)
-		return "", nil, fmt.Errorf("failed to build sql query: %w", err)
-	}
-	return sql, args, nil
-}
-
-func buildGeojsonFeaturePropertiesSqlExpression(columns ...string) string {
-	v := "json_build_object("
-	len := len(columns)
-	for i, column := range columns {
-		v += fmt.Sprintf("'%s', %s", column, column)
-		if i < len-1 {
-			v += ", "
-		}
-	}
-	v += ")"
-	return v
 }
 
 func streamRows(rows pgx.Rows, w http.ResponseWriter, ctx context.Context) error {
