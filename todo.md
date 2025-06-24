@@ -1,14 +1,30 @@
 # TODO
 
+## MVP
+
+[x] - feature collection endpoints
+[x] - geojsonl endpoints
+[] - security
+[x] - data in production
+[] - rate limiting
+[] - access tokens
+[] - docs - svelte app or swagger
+
 ## api
 
 [] api endpoint tests
 
 [] add cursor (next url) value in return header
 
-[] add middleware for cors and logging ! a class with "WARN, ERROR, DEBUG, INFO" messages
+[] use constants for query parameter names - take, startAfter
 
-[] fix confused naming between lv1 and lv 2
+[] add tracing id to logger
+
+[] add middleware for cors
+
+[] structured json logging
+
+[] write tests for exiting endpoints and utility functions
 
 [] Add more structured error handling
 
@@ -16,11 +32,11 @@
 
 [] check if geometry can be null according to pg definitions and if not remove geom is not null check from sql queries
 
-[] rate limiter or research how to prevent ddos attacks
-
 [] implement endpoint access token
 
-[] figure out how to log
+[] find monitoring platform for analytics and observability
+
+[x] rate limiter or research how to prevent ddos attacks -> Caddy handles this
 
 ## tile server ?
 
