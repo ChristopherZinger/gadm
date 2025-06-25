@@ -21,7 +21,7 @@ var featureCollectionEndpointInfo = map[GadmLevel]FeatureCollectionHandlerInfo{
 			GeometryColumnName:     Adm0.Geometry,
 			OrderByColumnName:      Adm0.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 5},
 	},
 	GadmLevel1: {
 		queryParams: FeatureCollectionQueryParams{
@@ -33,7 +33,7 @@ var featureCollectionEndpointInfo = map[GadmLevel]FeatureCollectionHandlerInfo{
 			GeometryColumnName: Adm1.Geometry,
 			OrderByColumnName:  Adm1.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 10},
 	},
 	GadmLevel2: {
 		queryParams: FeatureCollectionQueryParams{
@@ -73,7 +73,7 @@ var featureCollectionEndpointInfo = map[GadmLevel]FeatureCollectionHandlerInfo{
 			GeometryColumnName: Adm4.Geometry,
 			OrderByColumnName:  Adm4.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 50},
 	},
 	GadmLevel5: {
 		queryParams: FeatureCollectionQueryParams{
@@ -86,7 +86,7 @@ var featureCollectionEndpointInfo = map[GadmLevel]FeatureCollectionHandlerInfo{
 			GeometryColumnName: Adm5.Geometry,
 			OrderByColumnName:  Adm5.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		queryLimits: QueryLimits{minLimit: 1, maxLimit: 50},
 	},
 }
 
