@@ -11,8 +11,8 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		logger.Info("request_started method=%s path=%s remote_addr=%s",
-			r.Method, r.URL.Path, r.RemoteAddr)
+		logger.Info("request_started method=%s path=%s remote_addr=%s query_params=%v",
+			r.Method, r.URL.Path, r.RemoteAddr, r.URL.Query())
 
 		next.ServeHTTP(w, r)
 
