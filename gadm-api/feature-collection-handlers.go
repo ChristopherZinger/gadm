@@ -99,7 +99,7 @@ func setFeatureCollectionResponseHeaders(w http.ResponseWriter) {
 func CreateFeatureCollectionHandlers(s *Server) ([]HandlerInfo, error) {
 	handlerInfos := []HandlerInfo{}
 	for _, gadmLevel := range supportedGadmLevelsForFeatureCollection {
-		url := fmt.Sprintf("/api/v1/fc/lv%d", gadmLevel)
+		url := getFeatureCollectionUrl(gadmLevel)
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			s.featureCollectionEndpointHandler(w, r, gadmLevel)
 		}

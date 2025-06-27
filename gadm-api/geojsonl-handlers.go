@@ -148,7 +148,7 @@ type HandlerInfo struct {
 func CreateGeojsonlHandlers(s *Server) ([]HandlerInfo, error) {
 	handlerInfos := []HandlerInfo{}
 	for _, gadmLevel := range supportedGadmLevelsForGeojsonl {
-		url := fmt.Sprintf("/api/v1/geojsonl/lv%d", gadmLevel)
+		url := getGeojsonlUrl(gadmLevel)
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			s.handleGeoJsonl(w, r, gadmLevel)
 		}
