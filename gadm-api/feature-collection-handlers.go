@@ -126,7 +126,7 @@ func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http
 		FeaturePropertiesNames: params.FeaturePropertiesNames,
 		GeometryColumnName:     params.GeometryColumnName,
 		OrderByColumnName:      params.OrderByColumnName,
-		StartAfterValue:        max(paginationParams.StartAfterFid, MIN_FID),
+		StartAtValue:           max(paginationParams.StartAtFid, MIN_FID),
 		LimitValue:             clamp(paginationParams.Limit, limits.minLimit, limits.maxLimit),
 	}
 

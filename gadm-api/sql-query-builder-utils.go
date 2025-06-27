@@ -12,7 +12,7 @@ type GeoJsonFeatureSqlQueryParams struct {
 	FeaturePropertiesNames []string
 	GeometryColumnName     string
 	OrderByColumnName      string // This has to be a integer column!
-	StartAfterValue        int
+	StartAtValue           int
 	LimitValue             int
 }
 
@@ -21,7 +21,7 @@ type FeatureCollectionQueryParams struct {
 	FeaturePropertiesNames []string
 	GeometryColumnName     string
 	OrderByColumnName      string // This has to be a integer column!
-	StartAfterValue        int
+	StartAtValue           int
 	LimitValue             int
 }
 
@@ -82,7 +82,7 @@ func buildGeojsonFeatureSqlQuery(
 
 	query := squirrel.Select(geojsonFeatureExpression).
 		From(params.TableName).
-		Where(squirrel.Expr(fmt.Sprintf("%s > $1", params.OrderByColumnName), params.StartAfterValue)).
+		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", params.OrderByColumnName), params.StartAtValue)).
 		OrderBy(fmt.Sprintf("%s ASC", params.OrderByColumnName)).
 		Limit(uint64(params.LimitValue))
 
@@ -105,7 +105,7 @@ func buildFeatureCollectionSqlQuery(params FeatureCollectionQueryParams) (string
 	columnNames := append(params.FeaturePropertiesNames, params.GeometryColumnName)
 	subQuery := squirrel.Select(columnNames...).
 		From(params.TableName).
-		Where(squirrel.Expr(fmt.Sprintf("%s > $1", params.OrderByColumnName), max(params.StartAfterValue, MIN_FID))).
+		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", params.OrderByColumnName), max(params.StartAtValue, MIN_FID))).
 		OrderBy(fmt.Sprintf("%s ASC", params.OrderByColumnName)).
 		Limit(uint64(params.LimitValue))
 

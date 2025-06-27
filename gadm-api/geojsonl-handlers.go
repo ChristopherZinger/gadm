@@ -11,11 +11,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const MIN_FID = 0
+const MIN_FID = 1
 
 type PaginationParams struct {
-	Limit         int
-	StartAfterFid int
+	Limit      int
+	StartAtFid int
 }
 
 type GeojsonlHandlerInfo struct {
@@ -124,13 +124,13 @@ func getPaginationParams(r *http.Request) (PaginationParams, error) {
 		return PaginationParams{}, fmt.Errorf("failed to parse query parameter 'take': %w", err)
 	}
 
-	startAfterFid, err := expectIntParamInQuery(r, "startAfter", 0)
+	startAtFid, err := expectIntParamInQuery(r, string(START_AT_QUERY_KEY), 0)
 	if err != nil {
-		return PaginationParams{}, fmt.Errorf("failed to parse query parameter 'startAfter': %w", err)
+		return PaginationParams{}, fmt.Errorf("failed to parse query parameter '%s': %w", START_AT_QUERY_KEY, err)
 	}
 	return PaginationParams{
-		Limit:         take,
-		StartAfterFid: startAfterFid,
+		Limit:      take,
+		StartAtFid: startAtFid,
 	}, nil
 }
 
@@ -176,7 +176,7 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 		FeaturePropertiesNames: params.FeaturePropertiesNames,
 		GeometryColumnName:     params.GeometryColumnName,
 		OrderByColumnName:      params.OrderByColumnName,
-		StartAfterValue:        paginationParams.StartAfterFid,
+		StartAtValue:           paginationParams.StartAtFid,
 		LimitValue:             clamp(paginationParams.Limit, limits.minLimit, limits.maxLimit),
 	})
 	if err != nil {

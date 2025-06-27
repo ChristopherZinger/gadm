@@ -15,8 +15,8 @@ const (
 type PaginationParamKeys string
 
 const (
-	pageSizeParamKey   PaginationParamKeys = "page-size"
-	startAfterParamKey PaginationParamKeys = "start-after"
+	PAGE_SIZE_QUERY_KEY PaginationParamKeys = "page-size"
+	START_AT_QUERY_KEY  PaginationParamKeys = "start-at"
 )
 
 type QueryParam struct {
