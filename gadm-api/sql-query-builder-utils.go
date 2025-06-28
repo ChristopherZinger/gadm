@@ -118,3 +118,19 @@ func buildFeatureCollectionSqlQuery(params FeatureCollectionQueryParams) (string
 	}
 	return sql, args, nil
 }
+
+func getNextFidSqlQuery(tableName string, orderByColumnName string, startAt int, pageSize int) (string, []interface{}, error) {
+	query := squirrel.Select(orderByColumnName).
+		From(tableName).
+		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", orderByColumnName), startAt)).
+		OrderBy(fmt.Sprintf("%s ASC", orderByColumnName)).
+		Limit(uint64(pageSize)).
+		Offset(uint64(pageSize))
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		logger.Error("failed_to_get_next_fid_param", err)
+		return "", nil, fmt.Errorf("failed to build next page check sql query: %w", err)
+	}
+	return sql, args, nil
+}

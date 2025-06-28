@@ -92,8 +92,11 @@ var featureCollectionEndpointInfo = map[GadmLevel]FeatureCollectionHandlerInfo{
 
 var supportedGadmLevelsForFeatureCollection = []GadmLevel{GadmLevel0, GadmLevel1, GadmLevel2, GadmLevel3, GadmLevel4, GadmLevel5}
 
-func setFeatureCollectionResponseHeaders(w http.ResponseWriter) {
+func setFeatureCollectionResponseHeaders(w http.ResponseWriter, nextUrl string) {
 	w.Header().Set("Content-Type", "application/json")
+	if nextUrl != "" {
+		w.Header().Set("Link", fmt.Sprintf("<%s>; rel=\"next\"", nextUrl))
+	}
 }
 
 func CreateFeatureCollectionHandlers(s *Server) ([]HandlerInfo, error) {
@@ -130,6 +133,22 @@ func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http
 		LimitValue:             clamp(paginationParams.Limit, limits.minLimit, limits.maxLimit),
 	}
 
+	nextFid, err := s.getNextFid(ctx, params.TableName, params.OrderByColumnName,
+		fcQueryParams.StartAtValue, fcQueryParams.LimitValue)
+	var nextUrl string
+	if err != nil {
+		logger.Error("failed_to_get_next_fid %v", err)
+	} else {
+		nextUrl = getFeatureCollectionUrl(gadmLevel, QueryParam{
+			Key:   string(PAGE_SIZE_QUERY_KEY),
+			Value: fmt.Sprintf("%d", fcQueryParams.LimitValue),
+		}, QueryParam{
+			Key:   string(START_AT_QUERY_KEY),
+			Value: fmt.Sprintf("%d", nextFid),
+		},
+		)
+	}
+
 	sql, args, err := buildFeatureCollectionSqlQuery(fcQueryParams)
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
@@ -143,6 +162,6 @@ func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	setFeatureCollectionResponseHeaders(w)
+	setFeatureCollectionResponseHeaders(w, nextUrl)
 	w.Write(featureCollectionJSON)
 }

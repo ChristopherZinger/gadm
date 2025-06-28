@@ -134,10 +134,13 @@ func getPaginationParams(r *http.Request) (PaginationParams, error) {
 	}, nil
 }
 
-func setGeojsonlStreamingResponseHeaders(w http.ResponseWriter) {
+func setGeojsonlStreamingResponseHeaders(w http.ResponseWriter, nextUrl string) {
 	w.Header().Set("Content-Type", "application/x-ndjson")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	if nextUrl != "" {
+		w.Header().Set("Link", fmt.Sprintf("<%s>; rel=\"next\"", nextUrl))
+	}
 }
 
 type HandlerInfo struct {
@@ -167,18 +170,36 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 		return
 	}
 
-	setGeojsonlStreamingResponseHeaders(w)
-
-	params := geojsonEndpointInfo[gadmLevel].queryParams
-	limits := geojsonEndpointInfo[gadmLevel].queryLimits
-	err = s.queryAdmGeoJsonl(ctx, w, GeoJsonFeatureSqlQueryParams{
-		TableName:              params.TableName,
-		FeaturePropertiesNames: params.FeaturePropertiesNames,
-		GeometryColumnName:     params.GeometryColumnName,
-		OrderByColumnName:      params.OrderByColumnName,
+	defaultGeojsonlSetting := geojsonEndpointInfo[gadmLevel].queryParams
+	defaultGeojsonPaginationLimit := geojsonEndpointInfo[gadmLevel].queryLimits
+	params := GeoJsonFeatureSqlQueryParams{
+		TableName:              defaultGeojsonlSetting.TableName,
+		FeaturePropertiesNames: defaultGeojsonlSetting.FeaturePropertiesNames,
+		GeometryColumnName:     defaultGeojsonlSetting.GeometryColumnName,
+		OrderByColumnName:      defaultGeojsonlSetting.OrderByColumnName,
 		StartAtValue:           paginationParams.StartAtFid,
-		LimitValue:             clamp(paginationParams.Limit, limits.minLimit, limits.maxLimit),
-	})
+		LimitValue:             clamp(paginationParams.Limit, defaultGeojsonPaginationLimit.minLimit, defaultGeojsonPaginationLimit.maxLimit),
+	}
+
+	nextFid, err := s.getNextFid(ctx, params.TableName, params.OrderByColumnName,
+		params.StartAtValue, params.LimitValue)
+	var nextUrl string
+	if err != nil {
+		logger.Error("failed_to_get_next_fid %v", err)
+	} else {
+		nextUrl = getFeatureCollectionUrl(gadmLevel, QueryParam{
+			Key:   string(PAGE_SIZE_QUERY_KEY),
+			Value: fmt.Sprintf("%d", params.LimitValue),
+		}, QueryParam{
+			Key:   string(START_AT_QUERY_KEY),
+			Value: fmt.Sprintf("%d", nextFid),
+		},
+		)
+	}
+
+	setGeojsonlStreamingResponseHeaders(w, nextUrl)
+
+	err = s.queryAdmGeoJsonl(ctx, w, params)
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)
 		return
