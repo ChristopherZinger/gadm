@@ -119,7 +119,7 @@ var geojsonEndpointInfo = map[GadmLevel]GeojsonlHandlerInfo{
 }
 
 func getPaginationParams(r *http.Request) (PaginationParams, error) {
-	take, err := expectIntParamInQuery(r, "take", 10)
+	pageSize, err := expectIntParamInQuery(r, string(PAGE_SIZE_QUERY_KEY), 13)
 	if err != nil {
 		return PaginationParams{}, fmt.Errorf("failed to parse query parameter 'take': %w", err)
 	}
@@ -129,7 +129,7 @@ func getPaginationParams(r *http.Request) (PaginationParams, error) {
 		return PaginationParams{}, fmt.Errorf("failed to parse query parameter '%s': %w", START_AT_QUERY_KEY, err)
 	}
 	return PaginationParams{
-		Limit:      take,
+		Limit:      pageSize,
 		StartAtFid: startAtFid,
 	}, nil
 }
