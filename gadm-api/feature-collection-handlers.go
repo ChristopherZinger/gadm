@@ -153,6 +153,7 @@ func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	var featureCollectionJSON json.RawMessage
@@ -160,6 +161,7 @@ func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http
 	if err != nil {
 		logger.Error("failed_to_query_database %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	setFeatureCollectionResponseHeaders(w, nextUrl)
