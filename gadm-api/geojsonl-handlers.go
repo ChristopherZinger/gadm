@@ -166,7 +166,7 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 	paginationParams, err := getPaginationParams(r)
 	if err != nil {
 		logger.Error("failed_to_get_pagination_params %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "invalid_query_parameters", http.StatusBadRequest)
 		return
 	}
 
@@ -202,6 +202,7 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 	err = s.queryAdmGeoJsonl(ctx, w, params)
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)
+		http.Error(w, "failed_to_stream_geojsonl", http.StatusInternalServerError)
 		return
 	}
 }
