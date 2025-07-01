@@ -7,22 +7,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-type GeoJsonFeatureSqlQueryParams struct {
-	TableName              string
-	FeaturePropertiesNames []string
-	GeometryColumnName     string
-	OrderByColumnName      string // This has to be a integer column!
-	StartAtValue           int
-	LimitValue             int
-}
-
-type FeatureCollectionQueryParams struct {
-	TableName              string
-	FeaturePropertiesNames []string
-	GeometryColumnName     string
-	OrderByColumnName      string // This has to be a integer column!
-	StartAtValue           int
-	LimitValue             int
+type SqlQueryParams struct {
+	StartAtValue int
+	LimitValue   int
+	FilterValue  string
 }
 
 func buildGeojsonFeaturePropertiesSqlExpression(columns ...string) string {
@@ -38,10 +26,7 @@ func buildGeojsonFeaturePropertiesSqlExpression(columns ...string) string {
 	return v
 }
 
-func buildGeojsonFeatureSqlExpression(params struct {
-	FeaturePropertiesNames []string
-	GeometryColumnName     string
-}) string {
+func buildGeojsonFeatureSqlExpression(params GeoJSONFeatureConfig) string {
 	featurePropertiesSqlExpr := buildGeojsonFeaturePropertiesSqlExpression(
 		params.FeaturePropertiesNames...,
 	)
@@ -55,10 +40,7 @@ func buildGeojsonFeatureSqlExpression(params struct {
 	return jsonBuildObjectFeature
 }
 
-func buildGeojsonFeatureCollectionSqlExpression(params struct {
-	FeaturePropertiesNames []string
-	GeometryColumnName     string
-}) string {
+func buildGeojsonFeatureCollectionSqlExpression(params GeoJSONFeatureConfig) string {
 	geojsonFeatureExpression := buildGeojsonFeatureSqlExpression(params)
 	jsonBuildObject := fmt.Sprintf(
 		`json_build_object(
@@ -71,20 +53,24 @@ func buildGeojsonFeatureCollectionSqlExpression(params struct {
 }
 
 func buildGeojsonFeatureSqlQuery(
-	params GeoJsonFeatureSqlQueryParams,
+	gadmLevel GadmLevel,
+	queryParams SqlQueryParams,
 ) (string, []interface{}, error) {
+	handlerConfig := geojsonHandlerQueryConfig[gadmLevel]
+
 	geojsonFeatureExpression := buildGeojsonFeatureSqlExpression(
-		struct {
-			FeaturePropertiesNames []string
-			GeometryColumnName     string
-		}{params.FeaturePropertiesNames, params.GeometryColumnName},
+		GeoJSONFeatureConfig{
+			FeaturePropertiesNames: handlerConfig.FeaturePropertiesNames,
+			GeometryColumnName:     handlerConfig.GeometryColumnName,
+		},
 	)
 
 	query := squirrel.Select(geojsonFeatureExpression).
-		From(params.TableName).
-		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", params.OrderByColumnName), params.StartAtValue)).
-		OrderBy(fmt.Sprintf("%s ASC", params.OrderByColumnName)).
-		Limit(uint64(params.LimitValue))
+		From(handlerConfig.TableName).
+		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", handlerConfig.OrderByColumnName),
+			max(queryParams.StartAtValue, MIN_FID))).
+		OrderBy(fmt.Sprintf("%s ASC", handlerConfig.OrderByColumnName)).
+		Limit(uint64(queryParams.LimitValue))
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -94,20 +80,23 @@ func buildGeojsonFeatureSqlQuery(
 	return sql, args, nil
 }
 
-func buildFeatureCollectionSqlQuery(params FeatureCollectionQueryParams) (string, []interface{}, error) {
+func buildFeatureCollectionSqlQuery(
+	gadmLevel GadmLevel,
+	queryParams SqlQueryParams,
+) (string, []interface{}, error) {
+	queryConfig := featureCollectionHandlerQueryConfig[gadmLevel]
+
 	featureCollectionSqlExpression := buildGeojsonFeatureCollectionSqlExpression(
-		struct {
-			FeaturePropertiesNames []string
-			GeometryColumnName     string
-		}{params.FeaturePropertiesNames, Adm0.Geometry},
+		GeoJSONFeatureConfig{queryConfig.FeaturePropertiesNames, Adm0.Geometry},
 	)
 
-	columnNames := append(params.FeaturePropertiesNames, params.GeometryColumnName)
+	columnNames := append(queryConfig.FeaturePropertiesNames, queryConfig.GeometryColumnName)
 	subQuery := squirrel.Select(columnNames...).
-		From(params.TableName).
-		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", params.OrderByColumnName), max(params.StartAtValue, MIN_FID))).
-		OrderBy(fmt.Sprintf("%s ASC", params.OrderByColumnName)).
-		Limit(uint64(params.LimitValue))
+		From(queryConfig.TableName).
+		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", queryConfig.OrderByColumnName),
+			max(queryParams.StartAtValue, MIN_FID))).
+		OrderBy(fmt.Sprintf("%s ASC", queryConfig.OrderByColumnName)).
+		Limit(uint64(queryParams.LimitValue))
 
 	mainQuery := squirrel.Select(featureCollectionSqlExpression).FromSelect(subQuery, "sub")
 

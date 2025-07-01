@@ -18,14 +18,22 @@ type PaginationParams struct {
 	StartAtFid int
 }
 
-type GeojsonlHandlerInfo struct {
-	queryParams GeoJsonFeatureSqlQueryParams
-	queryLimits QueryLimits
+type GeojsonlHandlerQueryConfig struct {
+	TableName string
+	GeoJSONFeatureConfig
+	QueryLimitConfig
+	FilterableColumns []string
+	OrderByColumnName string
 }
 
-type QueryLimits struct {
+type QueryLimitConfig struct {
 	minLimit int
 	maxLimit int
+}
+
+type GeoJSONFeatureConfig struct {
+	FeaturePropertiesNames []string
+	GeometryColumnName     string
 }
 
 type GadmLevel int
@@ -41,44 +49,45 @@ const (
 
 var supportedGadmLevelsForGeojsonl = []GadmLevel{GadmLevel0, GadmLevel1, GadmLevel2, GadmLevel3, GadmLevel4, GadmLevel5}
 
-var geojsonEndpointInfo = map[GadmLevel]GeojsonlHandlerInfo{
+var geojsonHandlerQueryConfig = map[GadmLevel]GeojsonlHandlerQueryConfig{
 	GadmLevel0: {
-		queryParams: GeoJsonFeatureSqlQueryParams{
-			TableName:              ADM_0_TABLE,
+		TableName: ADM_0_TABLE,
+		GeoJSONFeatureConfig: GeoJSONFeatureConfig{
 			FeaturePropertiesNames: []string{Adm0.FID, Adm0.GID0, Adm0.Country},
-			GeometryColumnName:     Adm0.Geometry,
-			OrderByColumnName:      Adm0.FID,
-		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+			GeometryColumnName:     Adm0.Geometry},
+		OrderByColumnName: Adm0.FID,
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
 	},
 	GadmLevel1: {
-		queryParams: GeoJsonFeatureSqlQueryParams{
-			TableName: ADM_1_TABLE,
+		TableName: ADM_1_TABLE,
+		GeoJSONFeatureConfig: GeoJSONFeatureConfig{
 			FeaturePropertiesNames: []string{Adm1.FID, Adm1.GID0, Adm1.Country,
 				Adm1.GID1, Adm1.Name1, Adm1.Varname1, Adm1.NlName1, Adm1.Type1,
 				Adm1.Engtype1, Adm1.Cc1, Adm1.Hasc1, Adm1.Iso1,
 			},
 			GeometryColumnName: Adm1.Geometry,
-			OrderByColumnName:  Adm1.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		OrderByColumnName: Adm1.FID,
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		FilterableColumns: []string{Adm1.GID0},
 	},
 	GadmLevel2: {
-		queryParams: GeoJsonFeatureSqlQueryParams{
-			TableName: ADM_2_TABLE,
+		TableName: ADM_2_TABLE,
+		GeoJSONFeatureConfig: GeoJSONFeatureConfig{
 			FeaturePropertiesNames: []string{Adm2.FID, Adm2.GID0, Adm2.Country,
 				Adm2.GID1, Adm2.Name1, Adm2.NlName1, Adm2.GID2, Adm2.Name2,
 				Adm2.Varname2, Adm2.NlName2, Adm2.Type2, Adm2.Engtype2, Adm2.Cc2,
 				Adm2.Hasc2,
 			},
 			GeometryColumnName: Adm2.Geometry,
-			OrderByColumnName:  Adm2.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		OrderByColumnName: Adm2.FID,
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		FilterableColumns: []string{Adm2.GID0, Adm2.GID1},
 	},
 	GadmLevel3: {
-		queryParams: GeoJsonFeatureSqlQueryParams{
-			TableName: ADM_3_TABLE,
+		TableName: ADM_3_TABLE,
+		GeoJSONFeatureConfig: GeoJSONFeatureConfig{
 			FeaturePropertiesNames: []string{Adm3.FID, Adm3.GID0, Adm3.Country,
 				Adm3.GID1, Adm3.Name1, Adm3.NlName1, Adm3.GID2, Adm3.Name2,
 				Adm3.NlName2, Adm3.GID3, Adm3.Name3, Adm3.Varname3,
@@ -86,35 +95,39 @@ var geojsonEndpointInfo = map[GadmLevel]GeojsonlHandlerInfo{
 				Adm3.Hasc3,
 			},
 			GeometryColumnName: Adm3.Geometry,
-			OrderByColumnName:  Adm3.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		OrderByColumnName: Adm3.FID,
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		FilterableColumns: []string{Adm3.GID0, Adm3.GID1, Adm3.GID2},
 	},
 	GadmLevel4: {
-		queryParams: GeoJsonFeatureSqlQueryParams{
-			TableName: ADM_4_TABLE,
+		TableName: ADM_4_TABLE,
+		GeoJSONFeatureConfig: GeoJSONFeatureConfig{
 			FeaturePropertiesNames: []string{Adm4.FID, Adm4.GID0, Adm4.Country,
 				Adm4.GID1, Adm4.Name1, Adm4.GID2, Adm4.Name2, Adm4.GID3,
 				Adm4.Name3, Adm4.GID4, Adm4.Name4, Adm4.Varname4, Adm4.Type4,
 				Adm4.Engtype4, Adm4.Cc4,
 			},
 			GeometryColumnName: Adm4.Geometry,
-			OrderByColumnName:  Adm4.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		OrderByColumnName: Adm4.FID,
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		FilterableColumns: []string{Adm4.GID0, Adm4.GID1, Adm4.GID2, Adm4.GID3},
 	},
 	GadmLevel5: {
-		queryParams: GeoJsonFeatureSqlQueryParams{
-			TableName: ADM_5_TABLE,
+		TableName: ADM_5_TABLE,
+		GeoJSONFeatureConfig: GeoJSONFeatureConfig{
 			FeaturePropertiesNames: []string{Adm5.FID, Adm5.GID0, Adm5.Country,
 				Adm5.GID1, Adm5.Name1, Adm5.GID2, Adm5.Name2, Adm5.GID3,
 				Adm5.Name3, Adm5.GID4, Adm5.Name4, Adm5.GID5, Adm5.Name5,
 				Adm5.Type5, Adm5.Engtype5, Adm5.Cc5,
 			},
 			GeometryColumnName: Adm5.Geometry,
-			OrderByColumnName:  Adm5.FID,
 		},
-		queryLimits: QueryLimits{minLimit: 1, maxLimit: 20},
+		OrderByColumnName: Adm5.FID,
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		FilterableColumns: []string{Adm5.GID0, Adm5.GID1, Adm5.GID2, Adm5.GID3,
+			Adm5.GID4},
 	},
 }
 
@@ -170,26 +183,21 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 		return
 	}
 
-	defaultGeojsonlSetting := geojsonEndpointInfo[gadmLevel].queryParams
-	defaultGeojsonPaginationLimit := geojsonEndpointInfo[gadmLevel].queryLimits
-	params := GeoJsonFeatureSqlQueryParams{
-		TableName:              defaultGeojsonlSetting.TableName,
-		FeaturePropertiesNames: defaultGeojsonlSetting.FeaturePropertiesNames,
-		GeometryColumnName:     defaultGeojsonlSetting.GeometryColumnName,
-		OrderByColumnName:      defaultGeojsonlSetting.OrderByColumnName,
-		StartAtValue:           paginationParams.StartAtFid,
-		LimitValue:             clamp(paginationParams.Limit, defaultGeojsonPaginationLimit.minLimit, defaultGeojsonPaginationLimit.maxLimit),
-	}
+	handlerConfig := geojsonHandlerQueryConfig[gadmLevel]
+	pageSize := clamp(paginationParams.Limit,
+		handlerConfig.QueryLimitConfig.minLimit,
+		handlerConfig.QueryLimitConfig.maxLimit)
+	startAtFid := max(paginationParams.StartAtFid, MIN_FID)
 
-	nextFid, err := s.getNextFid(ctx, params.TableName, params.OrderByColumnName,
-		params.StartAtValue, params.LimitValue)
+	nextFid, err := s.getNextFid(ctx, handlerConfig.TableName, handlerConfig.OrderByColumnName,
+		startAtFid, pageSize)
 	var nextUrl string
 	if err != nil {
 		logger.Error("failed_to_get_next_fid %v", err)
 	} else {
 		nextUrl = getFeatureCollectionUrl(gadmLevel, QueryParam{
 			Key:   string(PAGE_SIZE_QUERY_KEY),
-			Value: fmt.Sprintf("%d", params.LimitValue),
+			Value: fmt.Sprintf("%d", pageSize),
 		}, QueryParam{
 			Key:   string(START_AT_QUERY_KEY),
 			Value: fmt.Sprintf("%d", nextFid),
@@ -199,7 +207,10 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 
 	setGeojsonlStreamingResponseHeaders(w, nextUrl)
 
-	err = s.queryAdmGeoJsonl(ctx, w, params)
+	err = s.queryAdmGeoJsonl(ctx, w, gadmLevel, SqlQueryParams{
+		LimitValue:   pageSize,
+		StartAtValue: startAtFid,
+	})
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)
 		http.Error(w, "failed_to_stream_geojsonl", http.StatusInternalServerError)
@@ -207,8 +218,8 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 	}
 }
 
-func (s *Server) queryAdmGeoJsonl(ctx context.Context, w http.ResponseWriter, queryParams GeoJsonFeatureSqlQueryParams) error {
-	sql, args, err := buildGeojsonFeatureSqlQuery(queryParams)
+func (s *Server) queryAdmGeoJsonl(ctx context.Context, w http.ResponseWriter, gadmLevel GadmLevel, queryParams SqlQueryParams) error {
+	sql, args, err := buildGeojsonFeatureSqlQuery(gadmLevel, queryParams)
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
 		return fmt.Errorf("failed to build sql query: %w", err)
