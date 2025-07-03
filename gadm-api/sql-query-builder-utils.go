@@ -7,6 +7,8 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
+var psql = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
 type SqlQueryParams struct {
 	StartAtValue int
 	LimitValue   int
@@ -67,8 +69,7 @@ func buildGeojsonFeatureSqlQuery(
 
 	query := squirrel.Select(geojsonFeatureExpression).
 		From(handlerConfig.TableName).
-		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", handlerConfig.OrderByColumnName),
-			max(queryParams.StartAtValue, MIN_FID))).
+		Where(squirrel.GtOrEq{handlerConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)}).
 		OrderBy(fmt.Sprintf("%s ASC", handlerConfig.OrderByColumnName)).
 		Limit(uint64(queryParams.LimitValue))
 
@@ -91,14 +92,13 @@ func buildFeatureCollectionSqlQuery(
 	)
 
 	columnNames := append(queryConfig.FeaturePropertiesNames, queryConfig.GeometryColumnName)
-	subQuery := squirrel.Select(columnNames...).
+	subQuery := psql.Select(columnNames...).
 		From(queryConfig.TableName).
-		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", queryConfig.OrderByColumnName),
-			max(queryParams.StartAtValue, MIN_FID))).
+		Where(squirrel.GtOrEq{queryConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)}).
 		OrderBy(fmt.Sprintf("%s ASC", queryConfig.OrderByColumnName)).
 		Limit(uint64(queryParams.LimitValue))
 
-	mainQuery := squirrel.Select(featureCollectionSqlExpression).FromSelect(subQuery, "sub")
+	mainQuery := psql.Select(featureCollectionSqlExpression).FromSelect(subQuery, "sub")
 
 	sql, args, err := mainQuery.ToSql()
 	if err != nil {
@@ -111,7 +111,7 @@ func buildFeatureCollectionSqlQuery(
 func getNextFidSqlQuery(tableName string, orderByColumnName string, startAt int, pageSize int) (string, []interface{}, error) {
 	query := squirrel.Select(orderByColumnName).
 		From(tableName).
-		Where(squirrel.Expr(fmt.Sprintf("%s >= $1", orderByColumnName), startAt)).
+		Where(squirrel.GtOrEq{orderByColumnName: startAt}).
 		OrderBy(fmt.Sprintf("%s ASC", orderByColumnName)).
 		Limit(uint64(pageSize)).
 		Offset(uint64(pageSize))
