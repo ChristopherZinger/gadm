@@ -6,8 +6,12 @@ import (
 	"gadm-api/logger"
 )
 
-func (s *Server) getNextFid(ctx context.Context, tableName string, orderByColumnName string, startAt int, pageSize int) (int, error) {
-	sql, args, err := getNextFidSqlQuery(tableName, orderByColumnName, startAt, pageSize)
+func (s *Server) getNextFid(ctx context.Context, tableName string,
+	orderByColumnName string, startAt int, pageSize int,
+	filterParams SqlFilterParams) (int, error) {
+
+	sql, args, err := getNextFidSqlQuery(tableName, orderByColumnName,
+		startAt, pageSize, filterParams)
 
 	var nextFid int
 	err = s.db.QueryRow(ctx, sql, args...).Scan(&nextFid)

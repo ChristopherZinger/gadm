@@ -9,10 +9,15 @@ import (
 
 var psql = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
+type SqlFilterParams struct {
+	FilterColName string
+	FilterVal     string
+}
+
 type SqlQueryParams struct {
 	StartAtValue int
 	LimitValue   int
-	FilterValue  string
+	SqlFilterParams
 }
 
 func buildGeojsonFeaturePropertiesSqlExpression(columns ...string) string {
@@ -69,7 +74,13 @@ func buildGeojsonFeatureSqlQuery(
 
 	query := psql.Select(geojsonFeatureExpression).
 		From(handlerConfig.TableName).
-		Where(squirrel.GtOrEq{handlerConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)}).
+		Where(squirrel.GtOrEq{handlerConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)})
+
+	if queryParams.FilterColName != "" {
+		query = query.Where(squirrel.Eq{queryParams.FilterColName: queryParams.FilterVal})
+	}
+
+	query = query.
 		OrderBy(fmt.Sprintf("%s ASC", handlerConfig.OrderByColumnName)).
 		Limit(uint64(queryParams.LimitValue))
 
@@ -94,8 +105,17 @@ func buildFeatureCollectionSqlQuery(
 	columnNames := append(queryConfig.FeaturePropertiesNames, queryConfig.GeometryColumnName)
 	subQuery := psql.Select(columnNames...).
 		From(queryConfig.TableName).
-		Where(squirrel.GtOrEq{queryConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)}).
-		OrderBy(fmt.Sprintf("%s ASC", queryConfig.OrderByColumnName)).
+		Where(squirrel.GtOrEq{queryConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)})
+
+	if queryParams.SqlFilterParams.FilterColName != "" {
+		subQuery = subQuery.
+			Where(
+				squirrel.Eq{
+					queryParams.SqlFilterParams.FilterColName: queryParams.SqlFilterParams.FilterVal,
+				})
+	}
+
+	subQuery = subQuery.OrderBy(fmt.Sprintf("%s ASC", queryConfig.OrderByColumnName)).
 		Limit(uint64(queryParams.LimitValue))
 
 	mainQuery := psql.Select(featureCollectionSqlExpression).FromSelect(subQuery, "sub")
@@ -108,11 +128,16 @@ func buildFeatureCollectionSqlQuery(
 	return sql, args, nil
 }
 
-func getNextFidSqlQuery(tableName string, orderByColumnName string, startAt int, pageSize int) (string, []interface{}, error) {
+func getNextFidSqlQuery(tableName string, orderByColumnName string, startAt int, pageSize int, filterParams SqlFilterParams) (string, []interface{}, error) {
 	query := psql.Select(orderByColumnName).
 		From(tableName).
-		Where(squirrel.GtOrEq{orderByColumnName: startAt}).
-		OrderBy(fmt.Sprintf("%s ASC", orderByColumnName)).
+		Where(squirrel.GtOrEq{orderByColumnName: startAt})
+
+	if filterParams.FilterColName != "" {
+		query = query.Where(squirrel.Eq{filterParams.FilterColName: filterParams.FilterVal})
+	}
+
+	query = query.OrderBy(fmt.Sprintf("%s ASC", orderByColumnName)).
 		Limit(uint64(pageSize)).
 		Offset(uint64(pageSize))
 

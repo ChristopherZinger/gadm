@@ -184,13 +184,14 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 	}
 
 	handlerConfig := geojsonHandlerQueryConfig[gadmLevel]
+	filterParams := getSqlFilterParamsFromUrl(handlerConfig.FilterableColumns, r.URL.Query())
 	pageSize := clamp(paginationParams.Limit,
 		handlerConfig.QueryLimitConfig.minLimit,
 		handlerConfig.QueryLimitConfig.maxLimit)
 	startAtFid := max(paginationParams.StartAtFid, MIN_FID)
 
 	nextFid, err := s.getNextFid(ctx, handlerConfig.TableName, handlerConfig.OrderByColumnName,
-		startAtFid, pageSize)
+		startAtFid, pageSize, filterParams)
 	var nextUrl string
 	if err != nil {
 		logger.Error("failed_to_get_next_fid %v", err)
@@ -208,8 +209,9 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 	setGeojsonlStreamingResponseHeaders(w, nextUrl)
 
 	err = s.queryAdmGeoJsonl(ctx, w, gadmLevel, SqlQueryParams{
-		LimitValue:   pageSize,
-		StartAtValue: startAtFid,
+		LimitValue:      pageSize,
+		StartAtValue:    startAtFid,
+		SqlFilterParams: filterParams,
 	})
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)

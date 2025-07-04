@@ -5,12 +5,19 @@ import (
 	"fmt"
 	"gadm-api/logger"
 	"net/http"
+	"net/url"
 )
 
 type FeatureCollectionHandlerQueryConfig struct {
 	TableName string
 	GeoJSONFeatureConfig
 	QueryLimitConfig
+
+	// filterable columns need to be ordered by importance level
+	// in case of gid filtering it means from gid_0 down to gid_5
+	// if user passes multiple filtering params in the url
+	// the first matching filterable column will be
+	// the only one used for filtering
 	FilterableColumns []string
 	OrderByColumnName string
 }
@@ -117,6 +124,19 @@ func CreateFeatureCollectionHandlers(s *Server) ([]HandlerInfo, error) {
 	return handlerInfos, nil
 }
 
+func getSqlFilterParamsFromUrl(filterableColNames []string, urlValues url.Values) SqlFilterParams {
+	var result SqlFilterParams
+	for _, filterColName := range filterableColNames {
+		paramStrVal := urlValues.Get(filterColName)
+		if paramStrVal != "" {
+			result.FilterColName = filterColName
+			result.FilterVal = paramStrVal
+			break
+		}
+	}
+	return result
+}
+
 func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http.Request, gadmLevel GadmLevel) {
 	ctx := r.Context()
 
@@ -127,15 +147,16 @@ func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-
 	handlerConfig := featureCollectionHandlerQueryConfig[gadmLevel]
+
+	filterParams := getSqlFilterParamsFromUrl(handlerConfig.FilterableColumns, r.URL.Query())
 	pageSize := clamp(paginationParams.Limit,
 		handlerConfig.QueryLimitConfig.minLimit,
 		handlerConfig.QueryLimitConfig.maxLimit)
 	startAtFid := max(paginationParams.StartAtFid, MIN_FID)
 
 	nextFid, err := s.getNextFid(ctx, handlerConfig.TableName, handlerConfig.OrderByColumnName,
-		startAtFid, pageSize)
+		startAtFid, pageSize, filterParams)
 	var nextUrl string
 	if err != nil {
 		logger.Error("failed_to_get_next_fid %v", err)
@@ -151,8 +172,9 @@ func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http
 	}
 
 	sql, args, err := buildFeatureCollectionSqlQuery(gadmLevel, SqlQueryParams{
-		StartAtValue: startAtFid,
-		LimitValue:   pageSize,
+		StartAtValue:    startAtFid,
+		LimitValue:      pageSize,
+		SqlFilterParams: filterParams,
 	})
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
