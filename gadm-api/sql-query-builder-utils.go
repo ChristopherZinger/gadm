@@ -67,7 +67,7 @@ func buildGeojsonFeatureSqlQuery(
 		},
 	)
 
-	query := squirrel.Select(geojsonFeatureExpression).
+	query := psql.Select(geojsonFeatureExpression).
 		From(handlerConfig.TableName).
 		Where(squirrel.GtOrEq{handlerConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)}).
 		OrderBy(fmt.Sprintf("%s ASC", handlerConfig.OrderByColumnName)).
@@ -109,7 +109,7 @@ func buildFeatureCollectionSqlQuery(
 }
 
 func getNextFidSqlQuery(tableName string, orderByColumnName string, startAt int, pageSize int) (string, []interface{}, error) {
-	query := squirrel.Select(orderByColumnName).
+	query := psql.Select(orderByColumnName).
 		From(tableName).
 		Where(squirrel.GtOrEq{orderByColumnName: startAt}).
 		OrderBy(fmt.Sprintf("%s ASC", orderByColumnName)).
