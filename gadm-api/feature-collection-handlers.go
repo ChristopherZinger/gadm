@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gadm-api/logger"
 	"net/http"
-	"net/url"
 )
 
 type FeatureCollectionHandlerQueryConfig struct {
@@ -122,19 +121,6 @@ func CreateFeatureCollectionHandlers(s *Server) ([]HandlerInfo, error) {
 		handlerInfos = append(handlerInfos, HandlerInfo{url: url, handler: handler})
 	}
 	return handlerInfos, nil
-}
-
-func getSqlFilterParamsFromUrl(filterableColNames []string, urlValues url.Values) SqlFilterParams {
-	var result SqlFilterParams
-	for _, filterColName := range filterableColNames {
-		paramStrVal := urlValues.Get(filterColName)
-		if paramStrVal != "" {
-			result.FilterColName = filterColName
-			result.FilterVal = paramStrVal
-			break
-		}
-	}
-	return result
 }
 
 func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http.Request, gadmLevel GadmLevel) {
