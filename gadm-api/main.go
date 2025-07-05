@@ -12,7 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Server struct {
+type PgConn struct {
 	db *pgxpool.Pool
 }
 
@@ -36,7 +36,7 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	server := newServer(dbPool)
+	server := getPgConnector(dbPool)
 	mux := http.NewServeMux()
 
 	geojsonlHandlers, err := CreateGeojsonlHandlers(server)
@@ -55,6 +55,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", handler))
 }
 
-func newServer(db *pgxpool.Pool) *Server {
-	return &Server{db: db}
+func getPgConnector(db *pgxpool.Pool) *PgConn {
+	return &PgConn{db: db}
 }

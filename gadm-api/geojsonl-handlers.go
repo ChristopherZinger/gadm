@@ -19,11 +19,21 @@ type PaginationParams struct {
 }
 
 type GeojsonlHandlerQueryConfig struct {
+	GadmLevel GadmLevel
 	TableName string
 	GeoJSONFeatureConfig
 	QueryLimitConfig
 	FilterableColumns []string
 	OrderByColumnName string
+}
+
+type GadmGeojsonlHandler struct {
+	pgConn    *PgConn
+	req       *http.Request
+	writer    http.ResponseWriter
+	ctx       context.Context
+	gadmLevel GadmLevel
+	config    GeojsonlHandlerQueryConfig
 }
 
 type QueryLimitConfig struct {
@@ -147,12 +157,12 @@ func getPaginationParams(r *http.Request) (PaginationParams, error) {
 	}, nil
 }
 
-func setGeojsonlStreamingResponseHeaders(w http.ResponseWriter, nextUrl string) {
-	w.Header().Set("Content-Type", "application/x-ndjson")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
+func (handler *GadmGeojsonlHandler) setGeojsonlStreamingResponseHeaders(nextUrl string) {
+	handler.writer.Header().Set("Content-Type", "application/x-ndjson")
+	handler.writer.Header().Set("Cache-Control", "no-cache")
+	handler.writer.Header().Set("Connection", "keep-alive")
 	if nextUrl != "" {
-		w.Header().Set("Link", fmt.Sprintf("<%s>; rel=\"next\"", nextUrl))
+		handler.writer.Header().Set("Link", fmt.Sprintf("<%s>; rel=\"next\"", nextUrl))
 	}
 }
 
@@ -161,32 +171,23 @@ type HandlerInfo struct {
 	handler func(w http.ResponseWriter, r *http.Request)
 }
 
-func CreateGeojsonlHandlers(s *Server) ([]HandlerInfo, error) {
+func CreateGeojsonlHandlers(pgConn *PgConn) ([]HandlerInfo, error) {
 	handlerInfos := []HandlerInfo{}
 	for _, gadmLevel := range supportedGadmLevelsForGeojsonl {
 		url := getGeojsonlUrl(gadmLevel)
 		handler := func(w http.ResponseWriter, r *http.Request) {
-			s.handleGeoJsonl(w, r, gadmLevel)
+			handler := newGadmGeojsonlHandler(pgConn, r, w, gadmLevel)
+			handler.handle()
 		}
 		handlerInfos = append(handlerInfos, HandlerInfo{url: url, handler: handler})
 	}
 	return handlerInfos, nil
 }
 
-func (s *Server) getNextPageUrlQueryParams(
-	ctx context.Context,
-	gadmLevel GadmLevel,
-	startAtFid int,
+func getNextPageUrlQueryParams(
+	nextStartAtFid int,
 	pageSize int,
 	filterParams SqlFilterParams) ([]QueryParam, error) {
-
-	handlerConfig := geojsonHandlerQueryConfig[gadmLevel]
-
-	nextStartAtFid, err := s.getNextFid(ctx, handlerConfig.TableName, handlerConfig.OrderByColumnName,
-		startAtFid, pageSize, filterParams)
-	if err != nil {
-		return nil, fmt.Errorf("failed_to_get_next_start_at_fid %v", err)
-	}
 
 	nextUrlQueryParams := []QueryParam{
 		{
@@ -212,61 +213,86 @@ func (s *Server) getNextPageUrlQueryParams(
 	return nextUrlQueryParams, nil
 }
 
-func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLevel GadmLevel) {
-	ctx := r.Context()
-
-	paginationParams, err := getPaginationParams(r)
+func (handler *GadmGeojsonlHandler) handle() {
+	paginationParams, err := getPaginationParams(handler.req) // todo
 	if err != nil {
 		logger.Error("failed_to_get_pagination_params %v", err)
-		http.Error(w, "invalid_query_parameters", http.StatusBadRequest)
+		http.Error(handler.writer, "invalid_query_parameters", http.StatusBadRequest)
 		return
 	}
 
-	handlerConfig := geojsonHandlerQueryConfig[gadmLevel]
-	filterParams := getSqlFilterParamsFromUrl(handlerConfig.FilterableColumns, r.URL.Query())
+	filterParams := getSqlFilterParamsFromUrl(
+		handler.config.FilterableColumns,
+		handler.req.URL.Query())
 	pageSize := clamp(paginationParams.Limit,
-		handlerConfig.QueryLimitConfig.minLimit,
-		handlerConfig.QueryLimitConfig.maxLimit)
+		handler.config.QueryLimitConfig.minLimit,
+		handler.config.QueryLimitConfig.maxLimit)
 	startAtFid := max(paginationParams.StartAtFid, MIN_FID)
 
-	nextUrlParams, err := s.getNextPageUrlQueryParams(ctx, gadmLevel, startAtFid, pageSize, filterParams)
-	var nextUrl string
+	nextUrl, err := handler.getNextPageUrl(startAtFid, pageSize, filterParams)
 	if err != nil {
-		nextUrl = getGeojsonlUrl(gadmLevel, nextUrlParams...)
 	} else {
 		logger.Error("failed_to_get_next_url %v", err)
 	}
 	logger.Debug("_nexUrl %s", nextUrl)
 
-	setGeojsonlStreamingResponseHeaders(w, nextUrl)
+	handler.setGeojsonlStreamingResponseHeaders(nextUrl)
 
-	err = s.queryAdmGeoJsonl(ctx, w, gadmLevel, SqlQueryParams{
+	err = handler.queryAdmGeoJsonl(SqlQueryParams{
 		LimitValue:      pageSize,
 		StartAtValue:    startAtFid,
 		SqlFilterParams: filterParams,
 	})
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)
-		http.Error(w, "failed_to_stream_geojsonl", http.StatusInternalServerError)
+		http.Error(
+			handler.writer,
+			"failed_to_stream_geojsonl",
+			http.StatusInternalServerError)
 		return
 	}
 }
 
-func (s *Server) queryAdmGeoJsonl(ctx context.Context, w http.ResponseWriter, gadmLevel GadmLevel, queryParams SqlQueryParams) error {
-	sql, args, err := buildGeojsonFeatureSqlQuery(gadmLevel, queryParams)
+func (handler *GadmGeojsonlHandler) getNextPageUrl(
+	startAtFid int,
+	pageSize int,
+	filterParams SqlFilterParams) (string, error) {
+
+	nextStartAtFid, err := getNextFid(
+		handler.ctx,
+		handler.pgConn,
+		handler.config.TableName,
+		handler.config.OrderByColumnName,
+		startAtFid,
+		pageSize,
+		filterParams,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed_to_get_next_start_at_fid %v", err)
+	}
+
+	nextUrlParams, err := getNextPageUrlQueryParams(nextStartAtFid, pageSize, filterParams)
+	if err != nil {
+		return "", fmt.Errorf("failed_to_get_next_page_url_query_params %v", err)
+	}
+	return getGeojsonlUrl(handler.gadmLevel, nextUrlParams...), nil
+}
+
+func (handler *GadmGeojsonlHandler) queryAdmGeoJsonl(queryParams SqlQueryParams) error {
+	sql, args, err := buildGeojsonFeatureSqlQuery(handler.gadmLevel, queryParams)
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
 		return fmt.Errorf("failed to build sql query: %w", err)
 	}
 
-	rows, err := s.db.Query(ctx, sql, args...)
+	rows, err := handler.pgConn.db.Query(handler.ctx, sql, args...)
 	if err != nil {
 		logger.Error("failed_to_query_database %v", err)
 		return fmt.Errorf("failed to query database: %w", err)
 	}
 	defer rows.Close()
 
-	err = streamRows(rows, w, ctx)
+	err = handler.streamRows(rows)
 	if err != nil {
 		logger.Error("failed_to_stream_rows %v", err)
 		return fmt.Errorf("failed to stream rows: %w", err)
@@ -275,8 +301,8 @@ func (s *Server) queryAdmGeoJsonl(ctx context.Context, w http.ResponseWriter, ga
 	return nil
 }
 
-func streamRows(rows pgx.Rows, w http.ResponseWriter, ctx context.Context) error {
-	flusher, err := NewFlusher(w, ctx)
+func (handler *GadmGeojsonlHandler) streamRows(rows pgx.Rows) error {
+	flusher, err := NewFlusher(handler.writer, handler.ctx)
 	if err != nil {
 		logger.Error("failed_to_create_flusher %v", err)
 		return fmt.Errorf("failed to create flusher: %w", err)
@@ -301,4 +327,21 @@ func streamRows(rows pgx.Rows, w http.ResponseWriter, ctx context.Context) error
 	}
 
 	return nil
+}
+
+func newGadmGeojsonlHandler(
+	pgConn *PgConn,
+	r *http.Request,
+	w http.ResponseWriter,
+	gadmLevel GadmLevel,
+) *GadmGeojsonlHandler {
+
+	return &GadmGeojsonlHandler{
+		pgConn:    pgConn,
+		req:       r,
+		writer:    w,
+		ctx:       r.Context(),
+		config:    geojsonHandlerQueryConfig[gadmLevel],
+		gadmLevel: gadmLevel,
+	}
 }
