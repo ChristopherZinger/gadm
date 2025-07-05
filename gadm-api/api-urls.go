@@ -2,8 +2,14 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 )
+
+type HandlerInfo struct {
+	url     string
+	handler func(w http.ResponseWriter, r *http.Request)
+}
 
 type EndpointType string
 

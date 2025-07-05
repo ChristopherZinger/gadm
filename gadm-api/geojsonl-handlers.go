@@ -13,11 +13,6 @@ import (
 
 const MIN_FID = 1
 
-type PaginationParams struct {
-	Limit      int
-	StartAtFid int
-}
-
 type GeojsonlHandlerQueryConfig struct {
 	GadmLevel GadmLevel
 	TableName string
@@ -141,22 +136,6 @@ var geojsonHandlerQueryConfig = map[GadmLevel]GeojsonlHandlerQueryConfig{
 	},
 }
 
-func getPaginationParams(r *http.Request) (PaginationParams, error) {
-	pageSize, err := expectIntParamInQuery(r, string(PAGE_SIZE_QUERY_KEY), -1)
-	if err != nil {
-		return PaginationParams{}, fmt.Errorf("failed to parse query parameter 'take': %w", err)
-	}
-
-	startAtFid, err := expectIntParamInQuery(r, string(START_AT_QUERY_KEY), -1)
-	if err != nil {
-		return PaginationParams{}, fmt.Errorf("failed to parse query parameter '%s': %w", START_AT_QUERY_KEY, err)
-	}
-	return PaginationParams{
-		Limit:      pageSize,
-		StartAtFid: startAtFid,
-	}, nil
-}
-
 func (handler *GadmGeojsonlHandler) setGeojsonlStreamingResponseHeaders(nextUrl string) {
 	handler.writer.Header().Set("Content-Type", "application/x-ndjson")
 	handler.writer.Header().Set("Cache-Control", "no-cache")
@@ -164,11 +143,6 @@ func (handler *GadmGeojsonlHandler) setGeojsonlStreamingResponseHeaders(nextUrl 
 	if nextUrl != "" {
 		handler.writer.Header().Set("Link", fmt.Sprintf("<%s>; rel=\"next\"", nextUrl))
 	}
-}
-
-type HandlerInfo struct {
-	url     string
-	handler func(w http.ResponseWriter, r *http.Request)
 }
 
 func CreateGeojsonlHandlers(pgConn *PgConn) ([]HandlerInfo, error) {
@@ -184,37 +158,8 @@ func CreateGeojsonlHandlers(pgConn *PgConn) ([]HandlerInfo, error) {
 	return handlerInfos, nil
 }
 
-func getNextPageUrlQueryParams(
-	nextStartAtFid int,
-	pageSize int,
-	filterParams SqlFilterParams) ([]QueryParam, error) {
-
-	nextUrlQueryParams := []QueryParam{
-		{
-			Key:   string(PAGE_SIZE_QUERY_KEY),
-			Value: fmt.Sprintf("%d", pageSize),
-		}, {
-			Key:   string(START_AT_QUERY_KEY),
-			Value: fmt.Sprintf("%d", nextStartAtFid),
-		},
-	}
-	nextFilterQueryParamColName, err := getFilterUrlQueryParameterForFilterableColumnName(filterParams.FilterColName)
-	if err == nil {
-		nextUrlQueryParams = append(nextUrlQueryParams, QueryParam{
-			Key:   nextFilterQueryParamColName,
-			Value: filterParams.FilterVal,
-		})
-	} else {
-		return nil, fmt.Errorf(
-			"failed_to_get_filter_url_query_parameter_for_filterable_column_name, filter_col_name: %s, %v",
-			filterParams.FilterColName, err)
-	}
-
-	return nextUrlQueryParams, nil
-}
-
 func (handler *GadmGeojsonlHandler) handle() {
-	paginationParams, err := getPaginationParams(handler.req) // todo
+	paginationParams, err := getPaginationParams(handler.req)
 	if err != nil {
 		logger.Error("failed_to_get_pagination_params %v", err)
 		http.Error(handler.writer, "invalid_query_parameters", http.StatusBadRequest)
