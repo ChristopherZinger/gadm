@@ -173,6 +173,45 @@ func CreateGeojsonlHandlers(s *Server) ([]HandlerInfo, error) {
 	return handlerInfos, nil
 }
 
+func (s *Server) getNextPageUrlQueryParams(
+	ctx context.Context,
+	gadmLevel GadmLevel,
+	startAtFid int,
+	pageSize int,
+	filterParams SqlFilterParams) ([]QueryParam, error) {
+
+	handlerConfig := geojsonHandlerQueryConfig[gadmLevel]
+
+	nextStartAtFid, err := s.getNextFid(ctx, handlerConfig.TableName, handlerConfig.OrderByColumnName,
+		startAtFid, pageSize, filterParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_get_next_start_at_fid %v", err)
+	}
+
+	nextUrlQueryParams := []QueryParam{
+		{
+			Key:   string(PAGE_SIZE_QUERY_KEY),
+			Value: fmt.Sprintf("%d", pageSize),
+		}, {
+			Key:   string(START_AT_QUERY_KEY),
+			Value: fmt.Sprintf("%d", nextStartAtFid),
+		},
+	}
+	nextFilterQueryParamColName, err := getFilterUrlQueryParameterForFilterableColumnName(filterParams.FilterColName)
+	if err == nil {
+		nextUrlQueryParams = append(nextUrlQueryParams, QueryParam{
+			Key:   nextFilterQueryParamColName,
+			Value: filterParams.FilterVal,
+		})
+	} else {
+		return nil, fmt.Errorf(
+			"failed_to_get_filter_url_query_parameter_for_filterable_column_name, filter_col_name: %s, %v",
+			filterParams.FilterColName, err)
+	}
+
+	return nextUrlQueryParams, nil
+}
+
 func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLevel GadmLevel) {
 	ctx := r.Context()
 
@@ -190,21 +229,14 @@ func (s *Server) handleGeoJsonl(w http.ResponseWriter, r *http.Request, gadmLeve
 		handlerConfig.QueryLimitConfig.maxLimit)
 	startAtFid := max(paginationParams.StartAtFid, MIN_FID)
 
-	nextFid, err := s.getNextFid(ctx, handlerConfig.TableName, handlerConfig.OrderByColumnName,
-		startAtFid, pageSize, filterParams)
+	nextUrlParams, err := s.getNextPageUrlQueryParams(ctx, gadmLevel, startAtFid, pageSize, filterParams)
 	var nextUrl string
 	if err != nil {
-		logger.Error("failed_to_get_next_fid %v", err)
+		nextUrl = getGeojsonlUrl(gadmLevel, nextUrlParams...)
 	} else {
-		nextUrl = getFeatureCollectionUrl(gadmLevel, QueryParam{
-			Key:   string(PAGE_SIZE_QUERY_KEY),
-			Value: fmt.Sprintf("%d", pageSize),
-		}, QueryParam{
-			Key:   string(START_AT_QUERY_KEY),
-			Value: fmt.Sprintf("%d", nextFid),
-		},
-		)
+		logger.Error("failed_to_get_next_url %v", err)
 	}
+	logger.Debug("_nexUrl %s", nextUrl)
 
 	setGeojsonlStreamingResponseHeaders(w, nextUrl)
 

@@ -141,20 +141,12 @@ func (s *Server) featureCollectionEndpointHandler(w http.ResponseWriter, r *http
 		handlerConfig.QueryLimitConfig.maxLimit)
 	startAtFid := max(paginationParams.StartAtFid, MIN_FID)
 
-	nextFid, err := s.getNextFid(ctx, handlerConfig.TableName, handlerConfig.OrderByColumnName,
-		startAtFid, pageSize, filterParams)
+	nextPageUrlParams, err := s.getNextPageUrlQueryParams(ctx, gadmLevel, startAtFid, pageSize, filterParams)
 	var nextUrl string
 	if err != nil {
 		logger.Error("failed_to_get_next_fid %v", err)
 	} else {
-		nextUrl = getFeatureCollectionUrl(gadmLevel, QueryParam{
-			Key:   string(PAGE_SIZE_QUERY_KEY),
-			Value: fmt.Sprintf("%d", pageSize),
-		}, QueryParam{
-			Key:   string(START_AT_QUERY_KEY),
-			Value: fmt.Sprintf("%d", nextFid),
-		},
-		)
+		nextUrl = getFeatureCollectionUrl(gadmLevel, nextPageUrlParams...)
 	}
 
 	sql, args, err := buildFeatureCollectionSqlQuery(gadmLevel, SqlQueryParams{
