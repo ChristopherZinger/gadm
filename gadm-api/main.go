@@ -36,15 +36,15 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	server := getPgConnector(dbPool)
+	pgConn := getPgConnector(dbPool)
 	mux := http.NewServeMux()
 
-	geojsonlHandlers, err := CreateGeojsonlHandlers(server)
+	geojsonlHandlers, err := CreateGeojsonlHandlers(pgConn)
 	for _, handlerInfo := range geojsonlHandlers {
 		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
 	}
 
-	featureCollectionHandlers, err := CreateFeatureCollectionHandlers(server)
+	featureCollectionHandlers, err := CreateFeatureCollectionHandlers(pgConn)
 	for _, handlerInfo := range featureCollectionHandlers {
 		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
 	}
