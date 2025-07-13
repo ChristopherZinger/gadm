@@ -6,8 +6,8 @@
 [x] - geojsonl endpoints
 [] - security
 [x] - data in production
-[] - rate limiting
-[] - access tokens
+[x] - rate limiting
+[x] - access tokens
 [] - docs - svelte app or swagger
 
 ## MVP 2
@@ -27,16 +27,16 @@
 [] - test filtering (with pagination)
 [] - test min max limits
 [] - test sql injections
-[] [bug] fix next page link when filtering by country
 [] add tracing id to logger
 [] add middleware for cors
 [] structured json logging
 [] Add more structured error handling
 [] Add request validation
 [] check if geometry can be null according to pg definitions and if not remove geom is not null check from sql queries
-[] implement endpoint access token
+[] implement endpoint access token - for creation and removal
+[] create go routine for removing stale or expired tokens from cache
 [] find monitoring platform for analytics and observability
-[x] rate limiter or research how to prevent ddos attacks -> Caddy handles this
+[x] rate limiter or research how to prevent ddos attacks -> Caddy handles this or this lib -> https://github.com/go-chi/httprate
 
 ## tile server ?
 
