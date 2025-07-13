@@ -49,7 +49,7 @@ func main() {
 		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
 	}
 
-	handler := LoggingMiddleware(mux)
+	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
 
 	logger.Info("server_starting_on_port_8080")
 	log.Fatal(http.ListenAndServe(":8080", handler))

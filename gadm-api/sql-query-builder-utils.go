@@ -148,3 +148,16 @@ func getNextFidSqlQuery(tableName string, orderByColumnName string, startAt int,
 	}
 	return sql, args, nil
 }
+
+func getAccessTokenCreatedAtSqlQuery(token string) (string, []interface{}, error) {
+	sql, args, err := psql.
+		Select(AccessTokensTable.CreatedAt).
+		From(ACCESS_TOKEN_TABLE).
+		Where(squirrel.Eq{AccessTokensTable.Token: token}).
+		ToSql()
+
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
