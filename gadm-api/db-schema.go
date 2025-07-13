@@ -213,3 +213,21 @@ var Adm5 = Adm5_Table{
 	Cc5:      "cc_5",
 	Geometry: "geom",
 }
+
+const ACCESS_TOKEN_TABLE = "access_tokens"
+
+type AccessTokens_Table struct {
+	Id        string
+	Token     string
+	Email     string
+	CreatedAt string
+	UpdatedAt string
+}
+
+var AccessTokensTable = AccessTokens_Table{
+	Id:        "id",
+	Token:     "token",
+	Email:     "email",
+	CreatedAt: "created_at",
+	UpdatedAt: "updated_at",
+}
