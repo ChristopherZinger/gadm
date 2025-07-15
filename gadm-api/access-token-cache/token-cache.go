@@ -18,7 +18,7 @@ func NewTokenCache() *TokenCache {
 }
 
 func (cache *TokenCache) SetIfNotExpired(token string, tokenRateInfo *TokenRateInfo) error {
-	if isExpired(tokenRateInfo.createdAt) {
+	if isTokenExpired(tokenRateInfo.createdAt) {
 		return errors.New(TokenExpiredMsg)
 	}
 
