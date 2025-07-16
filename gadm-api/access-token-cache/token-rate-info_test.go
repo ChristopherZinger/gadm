@@ -1,6 +1,7 @@
 package accessTokenCache
 
 import (
+	"sync"
 	"testing"
 	"time"
 )
@@ -66,5 +67,94 @@ func TestHandleHitExpiredToken(t *testing.T) {
 				"unexpected error message: '%s'. Expected '%s'",
 				err.Error(), TokenExpiredMsg)
 		}
+	}
+}
+
+func TestHandleHitRateLimitExceeded(t *testing.T) {
+	t.Logf("Test: TokenRateInfo.handleHit - rate limit exceeded")
+
+	createdAt := getCreatedAtFromDateInfo(DateInfo{year: 0, month: 0, day: 0})
+	tokenRateInfo := newTokenRateInfo(createdAt)
+
+	_NUM_HITS_PER_RATE_LIMIT := 10
+
+	for i := 0; i < _NUM_HITS_PER_RATE_LIMIT+1; i++ {
+		err := tokenRateInfo.handleHit()
+		if i < _NUM_HITS_PER_RATE_LIMIT {
+			if err != nil {
+				t.Errorf("unexpected error: %s", err.Error())
+			}
+		} else {
+			if err == nil {
+				t.Errorf("expected rate limit exceeded error but got nil")
+			} else if err.Error() != RateLimitExceededMsg {
+				t.Errorf(
+					"unexpected error message: '%s'. Expected '%s'",
+					err.Error(), RateLimitExceededMsg)
+			}
+		}
+	}
+}
+
+func TestHandleHitRateLimitNotExceeded(t *testing.T) {
+	t.Logf("Test: TokenRateInfo.handleHit - hit history is cleared accordingly between hits")
+
+	createdAt := getCreatedAtFromDateInfo(DateInfo{year: 0, month: 0, day: 0})
+	tokenRateInfo := newTokenRateInfo(createdAt)
+
+	waitDurationBetweenHits := RATE_LIMIT_DURATION / (NUM_HITS_PER_RATE_LIMIT)
+
+	for i := 0; i < 20; i++ {
+		err := tokenRateInfo.handleHit()
+		time.Sleep(waitDurationBetweenHits)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err.Error())
+			break
+		}
+	}
+}
+
+func TestHandleHitConcurrency(t *testing.T) {
+	t.Logf("Test: TokenRateInfo.handleHit - concurrent access and locking")
+
+	createdAt := getCreatedAtFromDateInfo(DateInfo{year: 0, month: 0, day: 0})
+	tokenRateInfo := newTokenRateInfo(createdAt)
+
+	var wg sync.WaitGroup
+	numCalls := 20
+	errCh := make(chan error, numCalls)
+
+	for i := 0; i < numCalls; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := tokenRateInfo.handleHit()
+			errCh <- err
+		}()
+	}
+
+	wg.Wait()
+	close(errCh)
+
+	var rateLimitExceededCount, numSuccessfulHits, otherErrCount int
+	for err := range errCh {
+		if err == nil {
+			numSuccessfulHits++
+		} else if err.Error() == RateLimitExceededMsg {
+			rateLimitExceededCount++
+		} else {
+			otherErrCount++
+			t.Errorf("unexpected error: %v", err)
+		}
+	}
+
+	if numSuccessfulHits > NUM_HITS_PER_RATE_LIMIT {
+		t.Errorf("expected at most %d successful hits, got %d", NUM_HITS_PER_RATE_LIMIT, numSuccessfulHits)
+	}
+	if rateLimitExceededCount != numCalls-NUM_HITS_PER_RATE_LIMIT {
+		t.Errorf("expected %d rate limit exceeded errors, got %d", numCalls-NUM_HITS_PER_RATE_LIMIT, rateLimitExceededCount)
+	}
+	if otherErrCount > 0 {
+		t.Errorf("unexpected errors occurred: %d", otherErrCount)
 	}
 }
