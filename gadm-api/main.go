@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -48,6 +49,11 @@ func main() {
 	for _, handlerInfo := range featureCollectionHandlers {
 		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
 	}
+
+	createAccessTokenUrl := fmt.Sprintf("%screate-access-token", getBaseApiUrl().Path)
+	mux.HandleFunc(createAccessTokenUrl, func(w http.ResponseWriter, r *http.Request) {
+		NewAccessTokenCreationHandler(pgConn, r, w, r.Context()).handle()
+	})
 
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
 
