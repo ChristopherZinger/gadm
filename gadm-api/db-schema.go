@@ -217,17 +217,19 @@ var Adm5 = Adm5_Table{
 const ACCESS_TOKEN_TABLE = "access_tokens"
 
 type AccessTokens_Table struct {
-	Id        string
-	Token     string
-	Email     string
-	CreatedAt string
-	UpdatedAt string
+	Id                      string
+	Token                   string
+	Email                   string
+	CreatedAt               string
+	UpdatedAt               string
+	CanGenerateAccessTokens string
 }
 
 var AccessTokensTable = AccessTokens_Table{
-	Id:        "id",
-	Token:     "token",
-	Email:     "email",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
+	Id:                      "id",
+	Token:                   "token",
+	Email:                   "email",
+	CreatedAt:               "created_at",
+	UpdatedAt:               "updated_at",
+	CanGenerateAccessTokens: "can_generate_access_tokens",
 }
