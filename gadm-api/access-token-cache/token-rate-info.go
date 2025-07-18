@@ -38,7 +38,7 @@ func (tri *TokenRateInfo) handleHit() error {
 	defer tri.mu.Unlock()
 
 	now := time.Now()
-	if isTokenExpired(tri.createdAt) {
+	if IsTokenExpired(tri.createdAt) {
 		return errors.New(TokenExpiredMsg)
 	}
 
@@ -60,7 +60,7 @@ func (tri *TokenRateInfo) handleHit() error {
 	return nil
 }
 
-func isTokenExpired(tokenCreationTime time.Time) bool {
+func IsTokenExpired(tokenCreationTime time.Time) bool {
 	tokenExpirationTime := tokenCreationTime.AddDate(
 		TOKEN_LIVE_DURATION.years,
 		TOKEN_LIVE_DURATION.months,

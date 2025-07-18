@@ -25,7 +25,7 @@ func TestIsTokenExpiredToken(t *testing.T) {
 	}
 
 	for _, expiredDate := range expiredDateInfos {
-		if !isTokenExpired(getCreatedAtFromDateInfo(expiredDate)) {
+		if !IsTokenExpired(getCreatedAtFromDateInfo(expiredDate)) {
 			t.Errorf("failed to detect expired token: date: Y%d M%d D%d",
 				expiredDate.year, expiredDate.month, expiredDate.day)
 		}
@@ -39,7 +39,7 @@ func TestIsTokenExpiredToken(t *testing.T) {
 	}
 
 	for _, v := range datesBeforeExpiration {
-		if isTokenExpired(getCreatedAtFromDateInfo(v)) {
+		if IsTokenExpired(getCreatedAtFromDateInfo(v)) {
 			t.Errorf("valid token date evaluated as expired: date: Y%d M%d D%d",
 				v.year, v.month, v.day)
 		}
