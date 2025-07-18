@@ -43,19 +43,19 @@ func GetAuthMiddleWare(pgConn *PgConn) func(http.Handler) http.Handler {
 
 				switch err.Error() {
 				case accessTokenCache.TokenExpiredMsg:
-					http.Error(w, "Unauthorized: Token expired", http.StatusUnauthorized)
+					http.Error(w, "token_expired", http.StatusUnauthorized)
 					return
 				case accessTokenCache.RateLimitExceededMsg:
-					http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+					http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
 					return
 				case FailedToQueryDatabaseMsg:
-					http.Error(w, "Internal server error", http.StatusInternalServerError)
+					http.Error(w, "internal_server_error", http.StatusInternalServerError)
 					return
 				case NoResultsMsg:
-					http.Error(w, "Unauthorized: Invalid access token", http.StatusUnauthorized)
+					http.Error(w, "invalid_access_token", http.StatusUnauthorized)
 					return
 				default:
-					http.Error(w, "Internal server error", http.StatusInternalServerError)
+					http.Error(w, "internal_server_error", http.StatusInternalServerError)
 					return
 				}
 			}
