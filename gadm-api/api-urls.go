@@ -30,9 +30,16 @@ type QueryParam struct {
 	Value string
 }
 
+func getBaseApiUrl() *url.URL {
+	u := &url.URL{
+		Path: "/api/v1/",
+	}
+	return u
+}
+
 func getApiUrl(endpointType EndpointType, gadmLevel GadmLevel, queryParams ...QueryParam) string {
 	u := &url.URL{
-		Path: fmt.Sprintf("/api/v1/%s/lv%d", endpointType, gadmLevel),
+		Path: fmt.Sprintf("%s%s/lv%d", getBaseApiUrl().Path, endpointType, gadmLevel),
 	}
 
 	q := u.Query()
