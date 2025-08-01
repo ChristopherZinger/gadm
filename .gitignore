@@ -8,3 +8,5 @@ pg-ingest-source/pg-data
 raspberrypi/connectssh.sh
 
 secrets
+
+**/gadm_410-levels.gpkg
