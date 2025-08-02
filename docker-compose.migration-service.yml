@@ -28,7 +28,7 @@ services:
       context: ./gadm-migrations
       dockerfile: Dockerfile
     image: ghcr.io/christopherzinger/gadmmigrationservice:latest
-    platform: linux/x86_64
+    platform: linux/amd64
     container_name: gadm-migrations
     environment:
       - DATABASE_URL=postgres://${ADMIN_USER}:${ADMIN_PASSWORD}@${DB_HOST}:5432/${GADM_DB_NAME}?sslmode=disable
