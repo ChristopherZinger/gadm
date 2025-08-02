@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  gadm-api:
+  gadm-db:
     build:
       context: ./gadm-db
       dockerfile: Dockerfile
