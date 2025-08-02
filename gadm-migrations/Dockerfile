@@ -27,8 +27,8 @@ WORKDIR /app
 # Copy binary from builder
 COPY --from=builder /app/gadm-migrate .
 
-# Copy migrations directory
-COPY migrations/ ./migrations/
+# Copy migrations directory from gadm-db
+COPY ./migrations/ ./migrations/
 
 # Create a wrapper script for common operations
 RUN echo '#!/bin/sh' > /app/migrate.sh && \
