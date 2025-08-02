@@ -31,11 +31,26 @@ services:
     platform: linux/amd64
     container_name: gadm-migrations
     environment:
-      - DATABASE_URL=postgres://${ADMIN_USER}:${ADMIN_PASSWORD}@${DB_HOST}:5432/${GADM_DB_NAME}?sslmode=disable
+      DATABASE_URL: ${DATABASE_URL_ADMIN}
     depends_on:
       - ${DB_HOST}
     restart: "no" # Run once and exit
     command: ["up"]
+
+  gadm-api:
+    build:
+      context: ./gadm-api
+      dockerfile: Dockerfile
+    image: ghcr.io/christopherzinger/gadmapi:latest
+    platform: linux/amd64
+    container_name: gadm-api
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ${DB_HOST}
+    restart: unless-stopped
 # volumes:
 #   gadm_db_data:
 # Usage examples:
