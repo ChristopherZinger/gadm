@@ -1,0 +1,45 @@
+# Example: Using dedicated migration service
+services:
+  gadm-db:
+    build:
+      context: ./gadm-db
+      dockerfile: Dockerfile
+    image: ghcr.io/christopherzinger/gadmdb:latest
+    platform: linux/amd64
+    container_name: ${DB_HOST}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      GADM_DB_NAME: ${GADM_DB_NAME}
+      POSTGRES_SUPERUSER_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      ADMIN_GROUP: ${ADMIN_GROUP}
+      ADMIN_USER: ${ADMIN_USER}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      APP_GROUP: ${APP_GROUP}
+      APP_USER: ${APP_USER}
+      APP_PASSWORD: ${APP_PASSWORD}
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  gadm-migrations:
+    build:
+      context: ./gadm-migrations
+      dockerfile: Dockerfile
+    image: ghcr.io/christopherzinger/gadmmigrationservice:latest
+    platform: linux/x86_64
+    container_name: gadm-migrations
+    environment:
+      - DATABASE_URL=postgres://${ADMIN_USER}:${ADMIN_PASSWORD}@${DB_HOST}:5432/${GADM_DB_NAME}?sslmode=disable
+    depends_on:
+      - ${DB_HOST}
+    restart: "no" # Run once and exit
+    command: ["up"]
+# volumes:
+#   gadm_db_data:
+# Usage examples:
+# docker-compose -f docker-compose.migrations-service.yml up  # Full stack
+# docker-compose -f docker-compose.migrations-service.yml run gadm-migrations create add_user_table
+# docker-compose -f docker-compose.migrations-service.yml run gadm-migrations status
+# docker-compose -f docker-compose.migrations-service.yml run gadm-migrations down --steps 1
