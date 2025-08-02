@@ -22,7 +22,6 @@ var DATABASE_URL_ENV_VAR = "DATABASE_URL"
 func main() {
 	if err := godotenv.Load(); err != nil {
 		logger.Warning("could_not_load_env_file %v", err)
-		return
 	}
 
 	pgUrl := os.Getenv(DATABASE_URL_ENV_VAR)
