@@ -2,9 +2,12 @@ version: "3.8"
 
 services:
   gadm-api:
-    image: gadm-api:latest
+    build:
+      context: ./gadm-db
+      dockerfile: Dockerfile
+    image: ghcr.io/christopherzinger/gadmdb:latest
     platform: linux/amd64
-    container_name: gadm-api-test
+    container_name: ${DB_HOST}
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
