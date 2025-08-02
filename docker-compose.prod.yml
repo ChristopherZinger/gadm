@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   gadm-db:
     image: ghcr.io/christopherzinger/gadmdb:latest
