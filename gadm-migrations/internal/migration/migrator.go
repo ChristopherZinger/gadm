@@ -42,3 +42,19 @@ func (m *Migrator) Up(ctx context.Context, targetVersion int64) error {
 
 	return nil
 }
+
+func (m *Migrator) Down(ctx context.Context) error {
+	fmt.Printf("⬇️ Rolling back migrations from %s\n", m.migrationsDir)
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return fmt.Errorf("failed to set dialect: %w", err)
+	}
+
+	err := goose.Down(m.db, m.migrationsDir)
+	if err != nil {
+		return fmt.Errorf("migration down failed: %w", err)
+	}
+	fmt.Println("✅ Migrations rolled back successfully")
+
+	return nil
+}

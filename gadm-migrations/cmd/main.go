@@ -26,6 +26,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVar(&migrationsDir, "migrations-dir", "./migrations", "Migrations directory")
 
 	rootCmd.AddCommand(upCmd())
+	rootCmd.AddCommand(downCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
@@ -51,5 +52,25 @@ func upCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().Int64Var(&targetVersion, "target", 0, "Target version (0 for latest)")
+	return cmd
+}
+
+func downCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "down",
+		Short: "Roll back the most recent migration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+
+			pool, err := database.Connect(ctx, dbURL)
+			if err != nil {
+				return fmt.Errorf("database connection failed: %w", err)
+			}
+			defer pool.Close()
+
+			migrator := migration.New(pool, migrationsDir)
+			return migrator.Down(ctx)
+		},
+	}
 	return cmd
 }
