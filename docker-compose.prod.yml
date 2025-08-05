@@ -21,6 +21,8 @@ services:
       APP_PASSWORD: ${APP_PASSWORD}
     ports:
       - "5432:5432"
+    volumes:
+      - gadm_db_data:/var/lib/postgresql/data
     restart: unless-stopped
 
   gadm-migrations:
@@ -51,10 +53,6 @@ services:
     depends_on:
       - ${DB_HOST}
     restart: unless-stopped
-# volumes:
-#   gadm_db_data:
-# Usage examples:
-# docker-compose -f docker-compose.migrations-service.yml up  # Full stack
-# docker-compose -f docker-compose.migrations-service.yml run gadm-migrations create add_user_table
-# docker-compose -f docker-compose.migrations-service.yml run gadm-migrations status
-# docker-compose -f docker-compose.migrations-service.yml run gadm-migrations down --steps 1
+
+volumes:
+  gadm_db_data:
