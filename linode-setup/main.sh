@@ -13,9 +13,9 @@
 # [x] install gdal
 # [x] install caddy + create Caddyfile
 # ---
-# [] login to ghcr.io (include token in initial .env)
+# [x] login to ghcr.io (include token in initial .env)
 # ---
-# [] sync docker-compose.prod and .env (in the future from github CI/CD)
+# [x] sync docker-compose.prod and .env (in the future from github CI/CD)
 # [] run docker compose
 # -- 
 # [] ingest GADM data
@@ -151,7 +151,7 @@ rsync -avz -e "ssh -i $SSH_KEY_PATH" \
 # SERVER_DIR=/home/$NON_ROOT_USER/server
 # rsync -avz -e "ssh -i $SSH_KEY_PATH" \
 #    ../docker-compose.prod.yml \
-#    ../.env \
+#    ../.env \ # TODO sync .env.prod as .env
 #    $NON_ROOT_USER@$REMOTE_HOST:$SERVER_DIR 
 
 
