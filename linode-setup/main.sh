@@ -93,7 +93,7 @@ rsync -avz -e "ssh -i $SSH_KEY_PATH" \
 
 # execute initial setup
 echo "Executing setup on remote server: $REMOTE_HOST" "as $NON_ROOT_USER"
-ssh -i $SSH_KEY_PATH $NON_ROOT_USER@$REMOTE_HOST << EOF
+ssh -i $SSH_KEY_PATH $NON_ROOT_USER@$REMOTE_HOST << 'EOF'
     #!/bin/bash
 
     pwd;
@@ -130,6 +130,31 @@ ssh -i $SSH_KEY_PATH $NON_ROOT_USER@$REMOTE_HOST << EOF
     echo "--------------------------------"
     echo "Login to ghcr.io"
     echo "--------------------------------"
-    echo $GHCR_TOKEN | docker login ghcr.io -u $GH_USERNAME --password-stdin
+    echo "GHCR_TOKEN: $GHCR_TOKEN"
+    echo "GH_USERNAME: $GH_USERNAME"
+    echo "$GHCR_TOKEN" | docker login ghcr.io -u $GH_USERNAME --password-stdin
     echo "--------------------------------"
 EOF
+
+
+GADM_SOURCE_DIR=/home/$NON_ROOT_USER/gadm-source
+echo "--------------------------------"
+echo "Copying files to remote server: $REMOTE_HOST" "as $NON_ROOT_USER"
+echo "--------------------------------"
+rsync -avz -e "ssh -i $SSH_KEY_PATH" \
+   ./create-initial-db-image/gadm_410-levels.gpkg \
+   $NON_ROOT_USER@$REMOTE_HOST:$GADM_SOURCE_DIR/ 
+
+# echo "--------------------------------"
+# echo "Copying docker-compose.prod.yml and .env to remote server: $REMOTE_HOST" "as $NON_ROOT_USER"
+# echo "--------------------------------"
+# SERVER_DIR=/home/$NON_ROOT_USER/server
+# rsync -avz -e "ssh -i $SSH_KEY_PATH" \
+#    ../docker-compose.prod.yml \
+#    ../.env \
+#    $NON_ROOT_USER@$REMOTE_HOST:$SERVER_DIR 
+
+
+echo "--------------------------------"
+echo "VM is ready to go!"
+echo "--------------------------------"
