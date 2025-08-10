@@ -6,18 +6,18 @@ set -e
 # Create custom postgresql.conf settings for memory optimization
 cat >> "$PGDATA/postgresql.conf" <<EOF
 
-# Memory tuning for 1GB VM GADM imports
+# Memory tuning for 2GB VM GADM imports
 shared_buffers = '${POSTGRES_SHARED_BUFFERS:-64MB}'
 work_mem = '${POSTGRES_WORK_MEM:-1MB}'
 maintenance_work_mem = '${POSTGRES_MAINTENANCE_WORK_MEM:-16MB}'
 effective_cache_size = '${POSTGRES_EFFECTIVE_CACHE_SIZE:-128MB}'
 
-# Additional settings for 1GB VM bulk imports
+# Additional settings for 2GB VM bulk imports
 checkpoint_completion_target = 0.9
-wal_buffers = 4MB
+wal_buffers = 8MB
 checkpoint_timeout = 30min
-max_wal_size = 512MB
-min_wal_size = 80MB
+max_wal_size = 1GB
+min_wal_size = 128MB
 
 # Logging for debugging memory issues
 log_temp_files = 10MB
