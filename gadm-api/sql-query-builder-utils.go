@@ -189,3 +189,32 @@ func getInsertAccessTokenWithReturningSqlQuery(email string) (string, []interfac
 	return sql, args, nil
 
 }
+
+type Point struct {
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
+}
+
+func getReverseGeocodeSqlQuery(point Point) (string, []interface{}, error) {
+	withClause := "WITH input_point AS (" +
+		"SELECT ST_SetSRID(ST_MakePoint(?, ?), 4326)::geometry(Point,4326) AS pt" +
+		"), candidates AS (" +
+		"SELECT g.geom_hash, g.geom, g.area_sq_m " +
+		"FROM gadm.adm_geometries AS g " +
+		"CROSS JOIN input_point ip " +
+		"WHERE ST_Contains(g.bbox, ip.pt) " +
+		"ORDER BY g.area_sq_m ASC LIMIT 1)"
+
+	query := psql.
+		Select("(to_jsonb(a.*) - 'id') as result").
+		Prefix(withClause, point.Lng, point.Lat).
+		From("adm a").
+		Join("candidates c ON a.geom_hash = c.geom_hash").
+		Limit(1)
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}

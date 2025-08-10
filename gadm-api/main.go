@@ -54,6 +54,11 @@ func main() {
 		NewAccessTokenCreationHandler(pgConn, r, w, r.Context()).handle()
 	})
 
+	reverseGeocodeUrl := fmt.Sprintf("%sreverse-geocode", getBaseApiUrl().Path)
+	mux.HandleFunc(reverseGeocodeUrl, func(w http.ResponseWriter, r *http.Request) {
+		NewReverseGeocodeHandler(r.Context(), r, w, pgConn).handle()
+	})
+
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
 
 	logger.Info("server_starting_on_port_8080")
