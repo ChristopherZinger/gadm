@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"gadm-api/logger"
 
+	db "gadm-api/db"
+
 	"github.com/Masterminds/squirrel"
 )
 
@@ -99,7 +101,7 @@ func buildFeatureCollectionSqlQuery(
 	queryConfig := featureCollectionHandlerQueryConfig[gadmLevel]
 
 	featureCollectionSqlExpression := buildGeojsonFeatureCollectionSqlExpression(
-		GeoJSONFeatureConfig{queryConfig.FeaturePropertiesNames, Adm0.Geometry},
+		GeoJSONFeatureConfig{queryConfig.FeaturePropertiesNames, db.Adm0.Geometry},
 	)
 
 	columnNames := append(queryConfig.FeaturePropertiesNames, queryConfig.GeometryColumnName)
@@ -151,9 +153,9 @@ func getNextFidSqlQuery(tableName string, orderByColumnName string, startAt int,
 
 func getAccessTokenCreatedAtSqlQuery(token string) (string, []interface{}, error) {
 	sql, args, err := psql.
-		Select(AccessTokensTable.CreatedAt).
-		From(ACCESS_TOKEN_TABLE).
-		Where(squirrel.Eq{AccessTokensTable.Token: token}).
+		Select(db.AccessTokensTable.CreatedAt).
+		From(db.ACCESS_TOKEN_TABLE).
+		Where(squirrel.Eq{db.AccessTokensTable.Token: token}).
 		ToSql()
 
 	if err != nil {
@@ -164,9 +166,9 @@ func getAccessTokenCreatedAtSqlQuery(token string) (string, []interface{}, error
 
 func getAccessTokenSqlQuery(token string) (string, []interface{}, error) {
 	sql, args, err := psql.
-		Select(AccessTokensTable.CreatedAt, AccessTokensTable.CanGenerateAccessTokens).
-		From(ACCESS_TOKEN_TABLE).
-		Where(squirrel.Eq{AccessTokensTable.Token: token}).
+		Select(db.AccessTokensTable.CreatedAt, db.AccessTokensTable.CanGenerateAccessTokens).
+		From(db.ACCESS_TOKEN_TABLE).
+		Where(squirrel.Eq{db.AccessTokensTable.Token: token}).
 		ToSql()
 
 	if err != nil {
@@ -177,10 +179,10 @@ func getAccessTokenSqlQuery(token string) (string, []interface{}, error) {
 
 func getInsertAccessTokenWithReturningSqlQuery(email string) (string, []interface{}, error) {
 	sql, args, err := psql.
-		Insert(ACCESS_TOKEN_TABLE).
-		Columns(AccessTokensTable.Email).
+		Insert(db.ACCESS_TOKEN_TABLE).
+		Columns(db.AccessTokensTable.Email).
 		Values(email).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", AccessTokensTable.Token, AccessTokensTable.CreatedAt)).
+		Suffix(fmt.Sprintf("RETURNING %s, %s", db.AccessTokensTable.Token, db.AccessTokensTable.CreatedAt)).
 		ToSql()
 
 	if err != nil {

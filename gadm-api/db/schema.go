@@ -1,4 +1,4 @@
-package main
+package db
 
 const ADM_0_TABLE = "adm_0"
 
