@@ -225,7 +225,13 @@ func (handler *GadmGeojsonlHandler) getNextPageUrl(
 }
 
 func (handler *GadmGeojsonlHandler) queryAdmGeoJsonl(queryParams SqlQueryParams) error {
-	sql, args, err := buildGeojsonFeatureSqlQuery(handler.gadmLevel, queryParams)
+	sql, args, err := buildGeojsonFeatureSqlQuery(
+		handler.gadmLevel,
+		queryParams.FilterVal,
+		queryParams.FilterColName,
+		queryParams.StartAtValue,
+		queryParams.LimitValue,
+	)
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
 		return fmt.Errorf("failed to build sql query: %w", err)

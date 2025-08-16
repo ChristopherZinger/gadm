@@ -9,6 +9,8 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
+var GADM_QUERY_ORDER_COLUMN_NAME = "fid"
+
 var psql = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
 type SqlFilterParams struct {
@@ -22,71 +24,132 @@ type SqlQueryParams struct {
 	SqlFilterParams
 }
 
-func buildGeojsonFeaturePropertiesSqlExpression(columns ...string) string {
-	v := "json_build_object("
-	len := len(columns)
-	for i, column := range columns {
-		v += fmt.Sprintf("'%s', %s", column, column)
-		if i < len-1 {
-			v += ", "
-		}
+func getGidForLv(lv GadmLevel) string {
+	switch lv {
+	case GadmLevel0:
+		return "gid_0"
+	case GadmLevel1:
+		return "gid_1"
+	case GadmLevel2:
+		return "gid_2"
+	case GadmLevel3:
+		return "gid_3"
+	case GadmLevel4:
+		return "gid_4"
+	case GadmLevel5:
+		return "gid_5"
 	}
-	v += ")"
-	return v
+	panic(fmt.Sprintf("invalid lv: %d", lv))
 }
 
-func buildGeojsonFeatureSqlExpression(params GeoJSONFeatureConfig) string {
-	featurePropertiesSqlExpr := buildGeojsonFeaturePropertiesSqlExpression(
-		params.FeaturePropertiesNames...,
-	)
-	jsonBuildObjectFeature := fmt.Sprintf(
-		`json_build_object(
-			'type', 'Feature',
-			'geometry', ST_AsGeoJSON(%[1]s)::json,
-			'properties', %[2]s
-		)`, params.GeometryColumnName, featurePropertiesSqlExpr,
-	)
-	return jsonBuildObjectFeature
+func getGadmBaseSelectBuilder(
+	lv GadmLevel,
+	gidFilterValue string,
+	filterColName string,
+	startAtFid int,
+	limit int,
+) squirrel.SelectBuilder {
+	baseQuery := psql.Select(
+		"adm.metadata::jsonb - 'md5_geom_binary_hash' as properties",
+		"g.bbox", "g.geom", "adm.geom_hash").
+		From("adm").
+		InnerJoin("adm_geometries g ON adm.geom_hash = g.geom_hash").
+		Where(squirrel.Eq{"adm.lv": lv})
+
+	if gidFilterValue != "" {
+		baseQuery = baseQuery.Where(squirrel.Eq{fmt.Sprintf("adm.metadata::jsonb ->> '%s'", filterColName): gidFilterValue})
+	}
+
+	baseQuery = baseQuery.
+		Where(squirrel.Gt{fmt.Sprintf("adm.metadata ->> '%s'", GADM_QUERY_ORDER_COLUMN_NAME): fmt.Sprintf("%d", startAtFid)}).
+		OrderBy(fmt.Sprintf("adm.metadata ->> '%s'", GADM_QUERY_ORDER_COLUMN_NAME)).
+		Limit(uint64(limit))
+
+	return baseQuery
 }
 
-func buildGeojsonFeatureCollectionSqlExpression(params GeoJSONFeatureConfig) string {
-	geojsonFeatureExpression := buildGeojsonFeatureSqlExpression(params)
-	jsonBuildObject := fmt.Sprintf(
+func getGadmFeatureSelectBuilder(
+	lv GadmLevel,
+	gidFilterValue string,
+	filterColName string,
+	startAtFid int,
+	limit int,
+) squirrel.SelectBuilder {
+	baseGadmQuery := getGadmBaseSelectBuilder(lv, gidFilterValue, filterColName, startAtFid, limit)
+
+	featureQuery := psql.Select(`json_build_object(
+		'type', 'Feature',
+		'id', r.geom_hash,
+		'geometry', ST_AsGeoJSON(r.geom)::json,
+		'properties', r.properties,
+		'bbox', ARRAY[
+			ST_XMin(r.bbox),
+			ST_YMin(r.bbox),
+			ST_XMax(r.bbox),
+			ST_YMax(r.bbox)
+		]) as geojson`).
+		FromSelect(baseGadmQuery, "r")
+
+	return featureQuery
+}
+
+func buildGadmFeatureCollectionSelectBuilder(
+	lv GadmLevel,
+	gidFilterValue string,
+	filterColName string,
+	startAtFid int,
+	limit int,
+) squirrel.SelectBuilder {
+	gadmFeatureQuery := getGadmFeatureSelectBuilder(lv, gidFilterValue, filterColName, startAtFid, limit)
+
+	result := psql.Select(
 		`json_build_object(
-				'type', 'FeatureCollection',
-				'features', json_agg(%s)
-			)`,
-		geojsonFeatureExpression,
-	)
-	return jsonBuildObject
+			'type', 'FeatureCollection',
+			'features', json_agg(geojson))`,
+	).FromSelect(gadmFeatureQuery, "features")
+
+	return result
+}
+
+func buildGeojsonSql(
+	lv GadmLevel,
+	gidFilterValue string,
+	filterColName string,
+	startAtFid int,
+	limit int) (string, []interface{}, error) {
+	gadmFeatureCollectionQuery := buildGadmFeatureCollectionSelectBuilder(
+		lv,
+		gidFilterValue,
+		filterColName,
+		startAtFid,
+		limit)
+
+	sql, args, err := gadmFeatureCollectionQuery.ToSql()
+	if err != nil {
+		logger.Error("failed_to_build_sql_query %v", err)
+		return "", nil, fmt.Errorf("failed to build sql query: %w", err)
+	}
+
+	return sql, args, nil
 }
 
 func buildGeojsonFeatureSqlQuery(
-	gadmLevel GadmLevel,
-	queryParams SqlQueryParams,
+	lv GadmLevel,
+	gidFilterValue string,
+	filterColName string,
+	startAtFid int,
+	limit int,
 ) (string, []interface{}, error) {
-	handlerConfig := geojsonHandlerQueryConfig[gadmLevel]
+	gadmFeatureSelectBuilder := getGadmFeatureSelectBuilder(
 
-	geojsonFeatureExpression := buildGeojsonFeatureSqlExpression(
-		GeoJSONFeatureConfig{
-			FeaturePropertiesNames: handlerConfig.FeaturePropertiesNames,
-			GeometryColumnName:     handlerConfig.GeometryColumnName,
-		},
+		lv,
+		gidFilterValue,
+		filterColName,
+		startAtFid,
+		limit,
 	)
 
-	query := psql.Select(geojsonFeatureExpression).
-		From(handlerConfig.TableName).
-		Where(squirrel.GtOrEq{handlerConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)})
-
-	if queryParams.FilterColName != "" {
-		query = query.Where(squirrel.Eq{queryParams.FilterColName: queryParams.FilterVal})
-	}
-
-	query = query.
-		OrderBy(fmt.Sprintf("%s ASC", handlerConfig.OrderByColumnName)).
-		Limit(uint64(queryParams.LimitValue))
-
-	sql, args, err := query.ToSql()
+	sql, args, err := gadmFeatureSelectBuilder.ToSql()
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
 		return "", nil, fmt.Errorf("failed to build sql query: %w", err)
@@ -94,52 +157,17 @@ func buildGeojsonFeatureSqlQuery(
 	return sql, args, nil
 }
 
-func buildFeatureCollectionSqlQuery(
-	gadmLevel GadmLevel,
-	queryParams SqlQueryParams,
-) (string, []interface{}, error) {
-	queryConfig := featureCollectionHandlerQueryConfig[gadmLevel]
-
-	featureCollectionSqlExpression := buildGeojsonFeatureCollectionSqlExpression(
-		GeoJSONFeatureConfig{queryConfig.FeaturePropertiesNames, db.Adm0.Geometry},
-	)
-
-	columnNames := append(queryConfig.FeaturePropertiesNames, queryConfig.GeometryColumnName)
-	subQuery := psql.Select(columnNames...).
-		From(queryConfig.TableName).
-		Where(squirrel.GtOrEq{queryConfig.OrderByColumnName: max(queryParams.StartAtValue, MIN_FID)})
-
-	if queryParams.SqlFilterParams.FilterColName != "" {
-		subQuery = subQuery.
-			Where(
-				squirrel.Eq{
-					queryParams.SqlFilterParams.FilterColName: queryParams.SqlFilterParams.FilterVal,
-				})
-	}
-
-	subQuery = subQuery.OrderBy(fmt.Sprintf("%s ASC", queryConfig.OrderByColumnName)).
-		Limit(uint64(queryParams.LimitValue))
-
-	mainQuery := psql.Select(featureCollectionSqlExpression).FromSelect(subQuery, "sub")
-
-	sql, args, err := mainQuery.ToSql()
-	if err != nil {
-		logger.Error("failed_to_build_sql_query %v", err)
-		return "", nil, fmt.Errorf("failed to build sql query: %w", err)
-	}
-	return sql, args, nil
-}
-
-func getNextFidSqlQuery(tableName string, orderByColumnName string, startAt int, pageSize int, filterParams SqlFilterParams) (string, []interface{}, error) {
-	query := psql.Select(orderByColumnName).
-		From(tableName).
-		Where(squirrel.GtOrEq{orderByColumnName: startAt})
+func getNextFidSqlQuery(startAtFid int, pageSize int, filterParams SqlFilterParams) (string, []interface{}, error) {
+	query := psql.Select(fmt.Sprintf("adm.metadata -> '%s'", GADM_QUERY_ORDER_COLUMN_NAME)).
+		From(db.ADM_TABLE).
+		Where(squirrel.GtOrEq{fmt.Sprintf("adm.metadata -> '%s'", GADM_QUERY_ORDER_COLUMN_NAME): startAtFid})
 
 	if filterParams.FilterColName != "" {
-		query = query.Where(squirrel.Eq{filterParams.FilterColName: filterParams.FilterVal})
+		query = query.Where(squirrel.Eq{
+			fmt.Sprintf("adm.metadata ->> '%s'", filterParams.FilterColName): filterParams.FilterVal})
 	}
 
-	query = query.OrderBy(fmt.Sprintf("%s ASC", orderByColumnName)).
+	query = query.OrderBy(fmt.Sprintf("adm.metadata -> '%s'", GADM_QUERY_ORDER_COLUMN_NAME)).
 		Limit(uint64(pageSize)).
 		Offset(uint64(pageSize))
 

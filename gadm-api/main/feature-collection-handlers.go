@@ -154,18 +154,8 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 		logger.Error("failed_to_get_next_fid %v", err)
 	}
 
-	sql, args, err := buildFeatureCollectionSqlQuery(
-		handler.gadmLevel,
-		SqlQueryParams{ // todo: remove gadm level on for getting config, config should be part of the handler
-			StartAtValue:    startAtFid,
-			LimitValue:      pageSize,
-			SqlFilterParams: filterParams,
-		})
-	if err != nil {
-		logger.Error("failed_to_build_sql_query %v", err)
-		http.Error(handler.writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	sql, args, err := buildGadmFeatureCollectionSelectBuilder(
+		handler.gadmLevel, filterParams.FilterVal, filterParams.FilterColName, startAtFid, pageSize).ToSql()
 
 	var featureCollectionJSON json.RawMessage
 	err = handler.pgConn.db.QueryRow(handler.ctx, sql, args...).

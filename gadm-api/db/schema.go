@@ -214,6 +214,22 @@ var Adm5 = Adm5_Table{
 	Geometry: "geom",
 }
 
+const ADM_TABLE = "adm"
+
+type Adm_Table struct {
+	Id       string
+	Lv       string
+	GeomHash string
+	Metadata string
+}
+
+var Adm = Adm_Table{
+	Id:       "id",
+	Lv:       "lv",
+	GeomHash: "geom_hash",
+	Metadata: "Metadata",
+}
+
 const ACCESS_TOKEN_TABLE = "access_tokens"
 
 type AccessTokens_Table struct {
