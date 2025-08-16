@@ -6,8 +6,11 @@ import (
 	"gadm-api/logger"
 )
 
-func getNextFid(ctx context.Context, pgConn *PgConn, tableName string,
-	orderByColumnName string, startAt int, pageSize int,
+func getNextFid(
+	ctx context.Context,
+	pgConn *PgConn,
+	startAt int,
+	pageSize int,
 	filterParams SqlFilterParams) (int, error) {
 
 	sql, args, err := getNextFidSqlQuery(startAt, pageSize, filterParams)

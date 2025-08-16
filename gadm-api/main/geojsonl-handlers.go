@@ -207,8 +207,6 @@ func (handler *GadmGeojsonlHandler) getNextPageUrl(
 	nextStartAtFid, err := getNextFid(
 		handler.ctx,
 		handler.pgConn,
-		handler.config.TableName,
-		handler.config.OrderByColumnName,
 		startAtFid,
 		pageSize,
 		filterParams,

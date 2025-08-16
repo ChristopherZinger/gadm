@@ -174,8 +174,6 @@ func (handler *GadmFeatureCollectionHandler) getNextPageUrl(startAtFid int, page
 	nextStartAtFid, err := getNextFid(
 		handler.ctx,
 		handler.pgConn,
-		handler.config.TableName,
-		handler.config.OrderByColumnName,
 		startAtFid,
 		pageSize,
 		filterParams,
@@ -202,8 +200,6 @@ func (handler *GadmFeatureCollectionHandler) getNextFid(
 	return getNextFid(
 		handler.ctx,
 		handler.pgConn,
-		handler.config.TableName,
-		handler.config.OrderByColumnName,
 		startAtFid,
 		pageSize,
 		filterParams,
