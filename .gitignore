@@ -10,3 +10,5 @@ raspberrypi/connectssh.sh
 secrets
 
 **/gadm_410-levels.gpkg
+
+bash
