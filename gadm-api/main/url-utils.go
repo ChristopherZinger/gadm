@@ -63,7 +63,7 @@ func getNextPageUrlQueryParams(
 		})
 	} else {
 		return nil, fmt.Errorf(
-			"failed_to_get_filter_url_query_parameter_for_filterable_column_name %s, %v",
+			"failed_to_get_filter_url_query_parameter_for_filterable_column_name, filter_col_name: %s, %v",
 			filterParams.FilterColName, err)
 	}
 
