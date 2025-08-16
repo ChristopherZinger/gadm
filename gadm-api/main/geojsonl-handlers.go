@@ -52,24 +52,23 @@ var geojsonHandlerQueryConfig = map[GadmLevel]GeojsonlHandlerQueryConfig{
 	},
 	GadmLevel1: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
-		FilterableColumns: []string{db.Adm1.GID0},
+		FilterableColumns: arrayToStrings(db.GidName0),
 	},
 	GadmLevel2: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
-		FilterableColumns: []string{db.Adm2.GID0, db.Adm2.GID1},
+		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1),
 	},
 	GadmLevel3: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
-		FilterableColumns: []string{db.Adm3.GID0, db.Adm3.GID1, db.Adm3.GID2},
+		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2),
 	},
 	GadmLevel4: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
-		FilterableColumns: []string{db.Adm4.GID0, db.Adm4.GID1, db.Adm4.GID2, db.Adm4.GID3},
+		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
 	},
 	GadmLevel5: {
-		QueryLimitConfig: QueryLimitConfig{minLimit: 1, maxLimit: 20},
-		FilterableColumns: []string{db.Adm5.GID0, db.Adm5.GID1, db.Adm5.GID2, db.Adm5.GID3,
-			db.Adm5.GID4},
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
 	},
 }
 

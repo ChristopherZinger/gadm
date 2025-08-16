@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 func clamp(value, min, max int) int {
 	if value < min {
 		return min
@@ -22,4 +24,12 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func arrayToStrings(args ...interface{}) []string {
+	var result []string
+	for _, item := range args {
+		result = append(result, fmt.Sprintf("%s", item))
+	}
+	return result
 }

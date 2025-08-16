@@ -33,23 +33,23 @@ var featureCollectionHandlerQueryConfig = map[GadmLevel]FeatureCollectionHandler
 		QueryLimitConfig: QueryLimitConfig{minLimit: 1, maxLimit: 5},
 	},
 	GadmLevel1: {
-		FilterableColumns: []string{db.Adm1.GID0},
+		FilterableColumns: arrayToStrings(db.GidName0),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 5},
 	},
 	GadmLevel2: {
-		FilterableColumns: []string{db.Adm2.GID0, db.Adm2.GID1},
+		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
 	},
 	GadmLevel3: {
-		FilterableColumns: []string{db.Adm3.GID0, db.Adm3.GID1, db.Adm3.GID2},
+		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
 	},
 	GadmLevel4: {
-		FilterableColumns: []string{db.Adm4.GID0, db.Adm4.GID1, db.Adm4.GID2, db.Adm4.GID3},
+		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 	},
 	GadmLevel5: {
-		FilterableColumns: []string{db.Adm5.GID0, db.Adm5.GID1, db.Adm5.GID2, db.Adm5.GID3, db.Adm5.GID4},
+		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 	},
 }
