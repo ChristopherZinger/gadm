@@ -55,19 +55,19 @@ var geojsonHandlerQueryConfig = map[GadmLevel]GeojsonlHandlerQueryConfig{
 		FilterableColumns: arrayToStrings(db.GidName0),
 	},
 	GadmLevel2: {
-		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1),
 	},
 	GadmLevel3: {
-		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2),
 	},
 	GadmLevel4: {
-		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 100},
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
 	},
 	GadmLevel5: {
-		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
+		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 100},
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
 	},
 }
