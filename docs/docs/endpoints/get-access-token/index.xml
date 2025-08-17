@@ -2,10 +2,10 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>get access token on GADM API</title>
-    <link>https://christopherzinger.github.io/gadm-app/docs/endpoints/get-access-token/</link>
+    <link>https://christopherzinger.github.io/gadm/docs/endpoints/get-access-token/</link>
     <description>Recent content in get access token on GADM API</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <atom:link href="https://christopherzinger.github.io/gadm-app/docs/endpoints/get-access-token/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://christopherzinger.github.io/gadm/docs/endpoints/get-access-token/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

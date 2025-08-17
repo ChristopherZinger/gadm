@@ -2,24 +2,24 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://christopherzinger.github.io/gadm-app/docs/authorization/</loc>
+    <loc>https://christopherzinger.github.io/gadm/docs/authorization/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/</loc>
+    <loc>https://christopherzinger.github.io/gadm/docs/endpoints/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/feature-collection/</loc>
+    <loc>https://christopherzinger.github.io/gadm/docs/endpoints/feature-collection/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/geojsonl/</loc>
+    <loc>https://christopherzinger.github.io/gadm/docs/endpoints/geojsonl/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/get-access-token/</loc>
+    <loc>https://christopherzinger.github.io/gadm/docs/endpoints/get-access-token/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/reverse-geocode/</loc>
+    <loc>https://christopherzinger.github.io/gadm/docs/endpoints/reverse-geocode/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/categories/</loc>
+    <loc>https://christopherzinger.github.io/gadm/categories/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/docs/</loc>
+    <loc>https://christopherzinger.github.io/gadm/docs/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/</loc>
+    <loc>https://christopherzinger.github.io/gadm/</loc>
   </url><url>
-    <loc>https://christopherzinger.github.io/gadm-app/tags/</loc>
+    <loc>https://christopherzinger.github.io/gadm/tags/</loc>
   </url>
 </urlset>

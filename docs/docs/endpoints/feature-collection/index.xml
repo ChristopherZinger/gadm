@@ -2,10 +2,10 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>feature collection on GADM API</title>
-    <link>https://christopherzinger.github.io/gadm-app/docs/endpoints/feature-collection/</link>
+    <link>https://christopherzinger.github.io/gadm/docs/endpoints/feature-collection/</link>
     <description>Recent content in feature collection on GADM API</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <atom:link href="https://christopherzinger.github.io/gadm-app/docs/endpoints/feature-collection/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://christopherzinger.github.io/gadm/docs/endpoints/feature-collection/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>
