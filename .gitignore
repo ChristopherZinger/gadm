@@ -14,6 +14,6 @@ secrets
 bash
 
 # Hugo generated files
-gadm-docs/public/
+# gadm-docs/public/  # Commented out for GitHub Pages deployment
 gadm-docs/resources/
 gadm-docs/.hugo_build.lock

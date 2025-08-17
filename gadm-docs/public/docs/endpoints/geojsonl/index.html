@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="
+  Geojsonl
+  
+  #
+  
+
+
+
+  Endpoint Info
+  
+  #
+  
+
+method:     GET
+path:       /api/v1/geojsonl/&lt;LEVEL&gt;
+LEVEL:      &#39;lv0&#39; | &#39;lv1&#39; | &#39;lv2&#39; | &#39;lv3&#39; | &#39;lv4&#39; | &#39;lv5&#39;
+
+  Notes
+  
+  #
+  
+
+This endpoint stream buffers of new line delimited
+GeoJSON Features.
+The GADM dataset defines up to 6 levels of administrative boundaries, but availability varies by country. For example, France includes all 6 levels, while smaller countries like Monaco only provide level 1.
+When making a request, you must specify the desired level directly in the URL path. This tells the API which administrative layer to return for your query.">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#343a40">
+<meta name="color-scheme" content="light dark"><meta property="og:url" content="https://example.org/docs/endpoints/geojsonl/">
+  <meta property="og:site_name" content="GADM API">
+  <meta property="og:title" content="geojsonl">
+  <meta property="og:description" content="Geojsonl # Endpoint Info # method: GET path: /api/v1/geojsonl/&lt;LEVEL&gt; LEVEL: &#39;lv0&#39; | &#39;lv1&#39; | &#39;lv2&#39; | &#39;lv3&#39; | &#39;lv4&#39; | &#39;lv5&#39; Notes # This endpoint stream buffers of new line delimited GeoJSON Features.
+The GADM dataset defines up to 6 levels of administrative boundaries, but availability varies by country. For example, France includes all 6 levels, while smaller countries like Monaco only provide level 1.
+When making a request, you must specify the desired level directly in the URL path. This tells the API which administrative layer to return for your query.">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="website">
+<title>geojsonl | GADM API</title>
+<link rel="icon" href="/favicon.png" >
+<link rel="manifest" href="/manifest.json">
+<link rel="canonical" href="https://example.org/docs/endpoints/geojsonl/">
+<link rel="stylesheet" href="/book.min.ce742184041b67827be505801d71b6b40c09608dfb292033ea54dbbc1d71a174.css" integrity="sha256-znQhhAQbZ4J75QWAHXG2tAwJYI37KSAz6lTbvB1xoXQ=" crossorigin="anonymous">
+  <script defer src="/fuse.min.js"></script>
+  <script defer src="/en.search.min.7a4e27225d673a3b9bf626197e030385a939826d4dbf7f62b2aff4f717eed252.js" integrity="sha256-ek4nIl1nOjub9iYZfgMDhak5gm1Nv39isq/09xfu0lI=" crossorigin="anonymous"></script>
+<link rel="alternate" type="application/rss+xml" href="https://example.org/docs/endpoints/geojsonl/index.xml" title="GADM API" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+  
+</head>
+<body dir="ltr" class="book-kind-section book-type-docs">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    
+<aside class="book-menu">
+  <div class="book-menu-content">
+    
+  <nav>
+<h2 class="book-brand">
+  <a class="flex align-center" href="/"><span>GADM API</span>
+  </a>
+</h2>
+
+
+<div class="book-search hidden">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+<script>document.querySelector(".book-search").classList.remove("hidden")</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <ul>
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <a href="/docs/authorization/" class="">Authorization</a>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li class="book-section-flat" >
+          
+  
+  
+
+  
+    <span>Endpoints</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/endpoints/feature-collection/" class="">feature collection</a>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/endpoints/geojsonl/" class="active">geojsonl</a>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/endpoints/get-access-token/" class="">get access token</a>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="/docs/endpoints/reverse-geocode/" class="">reverse geocode</a>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+
+  </div>
+</aside>
+ 
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <h3>geojsonl</h3>
+
+  <label for="toc-control">
+    
+    <img src="/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#endpoint-info">Endpoint Info</a></li>
+    <li><a href="#notes">Notes</a></li>
+    <li><a href="#example">Example</a></li>
+    <li><a href="#pagination">Pagination</a></li>
+    <li><a href="#query-parameters">Query Parameters</a>
+      <ul>
+        <li><a href="#page-size">Page Size</a></li>
+        <li><a href="#page-number">Page number</a></li>
+        <li><a href="#filtering">Filtering</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown book-article"><h1 id="geojsonl">
+  Geojsonl
+  
+  <a class="anchor" href="#geojsonl">#</a>
+  
+</h1>
+<hr>
+<h2 id="endpoint-info">
+  Endpoint Info
+  
+  <a class="anchor" href="#endpoint-info">#</a>
+  
+</h2>
+<pre tabindex="0"><code>method:     GET
+path:       /api/v1/geojsonl/&lt;LEVEL&gt;
+LEVEL:      &#39;lv0&#39; | &#39;lv1&#39; | &#39;lv2&#39; | &#39;lv3&#39; | &#39;lv4&#39; | &#39;lv5&#39;
+</code></pre><h2 id="notes">
+  Notes
+  
+  <a class="anchor" href="#notes">#</a>
+  
+</h2>
+<p>This endpoint stream buffers of <a href="https://www.interline.io/blog/geojsonl-extracts/">new line delimited</a>
+<a href="https://datatracker.ietf.org/doc/html/rfc7946#section-3.2">GeoJSON Features</a>.</p>
+<p>The GADM dataset defines up to 6 levels of administrative boundaries, but availability varies by country. For example, France includes all 6 levels, while smaller countries like Monaco only provide level 1.</p>
+<p>When making a request, you must specify the desired level directly in the URL path. This tells the API which administrative layer to return for your query.</p>
+<h2 id="example">
+  Example
+  
+  <a class="anchor" href="#example">#</a>
+  
+</h2>
+<pre tabindex="0"><code>curl -H &#34;Authorization: Bearer $TOKEN&#34; \
+    &#34;https://api.gadm-api.org/api/v1/geojsonl/lv0&#34;
+</code></pre><h2 id="pagination">
+  Pagination
+  
+  <a class="anchor" href="#pagination">#</a>
+  
+</h2>
+<p>The API uses cursor-based pagination. When more results are available,
+the response includes a <code>Link</code>
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Link">header</a>
+with the URL for the next page:</p>
+<p><strong>Response Header:</strong></p>
+<pre tabindex="0"><code>Link: https://api.gadm-api.org/api/v1/geojsonl/lv0?start-at=1234; rel=&#34;next&#34;
+</code></pre><p><strong>Example with curl:</strong></p>
+<pre tabindex="0"><code># First request
+curl -I -H &#34;Authorization: Bearer $TOKEN&#34; \
+    &#34;https://api.gadm-api.org/api/v1/geojsonl/lv1&#34;
+
+# Response headers will include:
+# Link: https://api.gadm-api.org/api/v1/geojsonl/lv1?start-after=ABC123; rel=&#34;next&#34;
+
+# Use the Link header URL for the next page
+curl -H &#34;Authorization: Bearer $TOKEN&#34; \
+    &#34;https://api.gadm-api.org/api/v1/fc/lv1?start-at=ABC123&#34;
+</code></pre><h2 id="query-parameters">
+  Query Parameters
+  
+  <a class="anchor" href="#query-parameters">#</a>
+  
+</h2>
+<h3 id="page-size">
+  Page Size
+  
+  <a class="anchor" href="#page-size">#</a>
+  
+</h3>
+<p>You can control page size with <code>page-size</code> parameter</p>
+<p>There are hard limits on maximum number of features you can retrieve in a single page.</p>
+<p><strong>Max number of features per level</strong></p>
+<ul>
+<li>level 0, 1 - 20 items</li>
+<li>level 2, 3 - 50 items</li>
+<li>level 4, 5 - 100 items</li>
+</ul>
+<p><strong>Example</strong></p>
+<pre tabindex="0"><code>/api/v1/geojsonl/&lt;LEVEL&gt;?page-size=5
+</code></pre><h3 id="page-number">
+  Page number
+  
+  <a class="anchor" href="#page-number">#</a>
+  
+</h3>
+<p>All features include original GADM <code>fid</code> field. This field is used to order
+and paginate the results. You can specify <code>fid</code> value you want to start with,
+however it&rsquo;s better to leverage the cursor included in the <code>Link</code> header.</p>
+<p><strong>Example</strong></p>
+<pre tabindex="0"><code>/api/v1/geojsonl/&lt;LEVEL&gt;?start-at=14039
+</code></pre><h3 id="filtering">
+  Filtering
+  
+  <a class="anchor" href="#filtering">#</a>
+  
+</h3>
+<p>You can retrieve boundaries that belong to the same parent administration unit
+by providing parent&rsquo;s <code>GID</code> value in a query parameter.</p>
+<p><strong>Usage</strong></p>
+<pre tabindex="0"><code>// PARENT_GID_PARAM: &#39;gid-0&#39; | &#39;gid-1&#39; | &#39;gid-2&#39; | &#39;gid-3&#39; | &#39;gid-4&#39; | &#39;gid-5&#39;
+// CHILD_LEVEL: &#39;lv0&#39; |&#39;lv1&#39; |&#39;lv2&#39; |&#39;lv3&#39; |&#39;lv4&#39; |&#39;lv5&#39;
+/api/v1/geojsonl/&lt;CHILD_LEVEL&gt;?&lt;PARENT_GID_PARAM&gt;=FRA
+</code></pre><p><strong>Example</strong></p>
+<pre tabindex="0"><code>// get all administrative units at level 3 for France
+/api/v1/geojsonl/lv3?gid-0=FRA
+</code></pre></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+
+
+
+
+  
+  
+  
+  <div class="flex flex-wrap justify-between">
+    <span>
+    
+      <a href="/docs/endpoints/feature-collection/" class="flex align-center book-icon">
+        <img src="/svg/backward.svg" class="book-icon" alt="Previous" title="feature collection" />
+        <span>feature collection</span>
+      </a>
+    
+    </span>
+    <span>
+    
+      <a href="/docs/endpoints/get-access-token/" class="flex align-center book-icon">
+        <span>get access token</span>
+        <img src="/svg/forward.svg" class="book-icon" alt="Next" title="get access token" />
+      </a>
+    
+    </span>
+  </div>
+  
+
+
+
+
+  <script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script>
+
+
+ 
+        
+      </footer>
+
+      
+  
+  <div class="book-comments">
+
+</div>
+  
+ 
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+
+<aside class="book-toc">
+  <div class="book-toc-content">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#endpoint-info">Endpoint Info</a></li>
+    <li><a href="#notes">Notes</a></li>
+    <li><a href="#example">Example</a></li>
+    <li><a href="#pagination">Pagination</a></li>
+    <li><a href="#query-parameters">Query Parameters</a>
+      <ul>
+        <li><a href="#page-size">Page Size</a></li>
+        <li><a href="#page-number">Page number</a></li>
+        <li><a href="#filtering">Filtering</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+
+
+  </div>
+</aside>
+
+ 
+  </main>
+
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
