@@ -12,3 +12,8 @@ secrets
 **/gadm_410-levels.gpkg
 
 bash
+
+# Hugo generated files
+gadm-docs/public/
+gadm-docs/resources/
+gadm-docs/.hugo_build.lock
