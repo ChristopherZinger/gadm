@@ -1,4 +1,4 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://christopherzinger.github.io/gadm/'
 languageCode = 'en-us'
 title = 'GADM API'
 theme = 'hugo-book'

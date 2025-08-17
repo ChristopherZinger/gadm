@@ -1,14 +1,14 @@
 {
   "name": "GADM API",
   "short_name": "GADM API",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/gadm-app/",
+  "scope": "/gadm-app/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/gadm-app/favicon.svg",
       "sizes": "512x512"
     }
   ]

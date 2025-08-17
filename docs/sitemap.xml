@@ -2,24 +2,24 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://example.org/docs/authorization/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/docs/authorization/</loc>
   </url><url>
-    <loc>https://example.org/docs/endpoints/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/</loc>
   </url><url>
-    <loc>https://example.org/docs/endpoints/feature-collection/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/feature-collection/</loc>
   </url><url>
-    <loc>https://example.org/docs/endpoints/geojsonl/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/geojsonl/</loc>
   </url><url>
-    <loc>https://example.org/docs/endpoints/get-access-token/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/get-access-token/</loc>
   </url><url>
-    <loc>https://example.org/docs/endpoints/reverse-geocode/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/docs/endpoints/reverse-geocode/</loc>
   </url><url>
-    <loc>https://example.org/categories/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/categories/</loc>
   </url><url>
-    <loc>https://example.org/docs/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/docs/</loc>
   </url><url>
-    <loc>https://example.org/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/</loc>
   </url><url>
-    <loc>https://example.org/tags/</loc>
+    <loc>https://christopherzinger.github.io/gadm-app/tags/</loc>
   </url>
 </urlset>
