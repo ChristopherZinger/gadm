@@ -5,7 +5,7 @@ theme = 'hugo-book'
 publishDir = '../docs'
 
 [params]
-  apiBaseUrl = 'https://api.gadm-api.org'
+  apiBaseUrl = 'api.worldlines.org'
   queryParamPageSize = "page-size"
   queryParamStartAt = "start-at"
   queryParamGid = "gid-"

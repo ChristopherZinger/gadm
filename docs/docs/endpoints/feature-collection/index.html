@@ -45,7 +45,7 @@ When making a request, you must specify the desired level directly in the URL pa
 <link rel="canonical" href="https://christopherzinger.github.io/gadm/docs/endpoints/feature-collection/">
 <link rel="stylesheet" href="/gadm/book.min.ce742184041b67827be505801d71b6b40c09608dfb292033ea54dbbc1d71a174.css" integrity="sha256-znQhhAQbZ4J75QWAHXG2tAwJYI37KSAz6lTbvB1xoXQ=" crossorigin="anonymous">
   <script defer src="/gadm/fuse.min.js"></script>
-  <script defer src="/gadm/en.search.min.fc90bbf582d5d0c55f92c759cc8f527f568c2307388b10d30c2dacc06701a2c5.js" integrity="sha256-/JC79YLV0MVfksdZzI9Sf1aMIwc4ixDTDC2swGcBosU=" crossorigin="anonymous"></script>
+  <script defer src="/gadm/en.search.min.369b5f430a99062dda8c2c8699d3728f48a1ee26fada8be8c23555e0eca71349.js" integrity="sha256-NptfQwqZBi3ajCyGmdNyj0ih7ib62ovowjVV4OynE0k=" crossorigin="anonymous"></script>
 <link rel="alternate" type="application/rss+xml" href="https://christopherzinger.github.io/gadm/docs/endpoints/feature-collection/index.xml" title="GADM API" />
 <!--
 Made with Book Theme
@@ -308,7 +308,7 @@ LEVEL:      &#39;lv0&#39; | &#39;lv1&#39; | &#39;lv2&#39; | &#39;lv3&#39; | &#39
   
 </h2>
 <pre tabindex="0"><code>curl -H &#34;Authorization: Bearer $TOKEN&#34; \
-    &#34;https://api.gadm-api.org/api/v1/fc/lv1&#34;
+    &#34;api.worldlines.org/api/v1/fc/lv1&#34;
 </code></pre><h2 id="pagination">
   Pagination
   
@@ -320,18 +320,18 @@ the response includes a <code>Link</code>
 <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Link">header</a>
 with the URL for the next page:</p>
 <p><strong>Response Header:</strong></p>
-<pre tabindex="0"><code>Link: https://api.gadm-api.org/api/v1/fc/lv1?start-at=1234; rel=&#34;next&#34;
+<pre tabindex="0"><code>Link: api.worldlines.org/api/v1/fc/lv1?start-at=1234; rel=&#34;next&#34;
 </code></pre><p><strong>Example with curl:</strong></p>
 <pre tabindex="0"><code># First request
 curl -I -H &#34;Authorization: Bearer $TOKEN&#34; \
-    https://api.gadm-api.org/api/v1/fc/lv1
+    api.worldlines.org/api/v1/fc/lv1
 
 # Response headers will include:
-# Link: https://api.gadm-api.org/api/v1/fc/lv1?start-after=ABC123; rel=&#34;next&#34;
+# Link: api.worldlines.org/api/v1/fc/lv1?start-after=ABC123; rel=&#34;next&#34;
 
 # Use the Link header URL for the next page
 curl -H &#34;Authorization: Bearer $TOKEN&#34; \
-    &#34;https://api.gadm-api.org/api/v1/fc/lv1?start-at=ABC123&#34;
+    &#34;api.worldlines.org/api/v1/fc/lv1?start-at=ABC123&#34;
 </code></pre><h2 id="query-parameters">
   Query Parameters
   
