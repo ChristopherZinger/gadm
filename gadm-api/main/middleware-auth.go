@@ -7,6 +7,7 @@ import (
 	"time"
 
 	accessTokenCache "gadm-api/access-token-cache"
+	db "gadm-api/db"
 	"gadm-api/logger"
 )
 
@@ -77,7 +78,7 @@ func GetAuthMiddleWare(pgConn *PgConn) func(http.Handler) http.Handler {
 const NOT_RESULTS_FOR_QUERY_PG_MSG = "no rows in result set"
 
 func getTokenCreatedAtFromDb(ctx context.Context, pgConn *PgConn, token string) (time.Time, error) {
-	sql, args, err := getAccessTokenCreatedAtSqlQuery(token)
+	sql, args, err := db.GetAccessTokenCreatedAtSqlQuery(token)
 
 	var createdAt time.Time
 	err = pgConn.db.QueryRow(ctx, sql, args...).Scan(&createdAt)

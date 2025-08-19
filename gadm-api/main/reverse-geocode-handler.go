@@ -8,6 +8,7 @@ import (
 
 	geojson "github.com/paulmach/go.geojson"
 
+	db "gadm-api/db"
 	utils "gadm-api/utils"
 )
 
@@ -60,7 +61,7 @@ func (handler *ReverseGeocodeHandler) handle() {
 
 	lng := geometry.Point[0]
 	lat := geometry.Point[1]
-	sql, args, err := getReverseGeocodeSqlQuery(Point{Lat: lat, Lng: lng})
+	sql, args, err := db.GetReverseGeocodeSqlQuery(db.Point{Lat: lat, Lng: lng})
 	if err != nil {
 		logger.Error("failed_to_build_reverse_geocode_sql %v", err)
 		http.Error(handler.writer, "internal_server_error", http.StatusInternalServerError)

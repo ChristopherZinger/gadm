@@ -110,7 +110,7 @@ func (handler *GadmGeojsonlHandler) handle() {
 
 	handler.setGeojsonlStreamingResponseHeaders(nextUrl)
 
-	err = handler.queryAdmGeoJsonl(SqlQueryParams{
+	err = handler.queryAdmGeoJsonl(db.SqlQueryParams{
 		LimitValue:      pageSize,
 		StartAtValue:    startAtFid,
 		SqlFilterParams: filterParams,
@@ -128,7 +128,7 @@ func (handler *GadmGeojsonlHandler) handle() {
 func (handler *GadmGeojsonlHandler) getNextPageUrl(
 	startAtFid int,
 	pageSize int,
-	filterParams SqlFilterParams) (string, error) {
+	filterParams db.SqlFilterParams) (string, error) {
 
 	nextStartAtFid, err := getNextFid(
 		handler.ctx,
@@ -148,8 +148,8 @@ func (handler *GadmGeojsonlHandler) getNextPageUrl(
 	return getGeojsonlUrl(handler.gadmLevel, nextUrlParams...), nil
 }
 
-func (handler *GadmGeojsonlHandler) queryAdmGeoJsonl(queryParams SqlQueryParams) error {
-	sql, args, err := buildGeojsonFeatureSqlQuery(
+func (handler *GadmGeojsonlHandler) queryAdmGeoJsonl(queryParams db.SqlQueryParams) error {
+	sql, args, err := db.BuildGeojsonFeatureSqlQuery(
 		handler.gadmLevel,
 		queryParams.FilterVal,
 		queryParams.FilterColName,

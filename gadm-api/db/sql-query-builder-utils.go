@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/Masterminds/squirrel"
 
-	db "gadm-api/db"
 	utils "gadm-api/utils"
 )
 
@@ -25,25 +24,7 @@ type SqlQueryParams struct {
 	SqlFilterParams
 }
 
-func getGidForLv(lv utils.GadmLevel) string {
-	switch lv {
-	case utils.GadmLevel0:
-		return "gid_0"
-	case utils.GadmLevel1:
-		return "gid_1"
-	case utils.GadmLevel2:
-		return "gid_2"
-	case utils.GadmLevel3:
-		return "gid_3"
-	case utils.GadmLevel4:
-		return "gid_4"
-	case utils.GadmLevel5:
-		return "gid_5"
-	}
-	panic(fmt.Sprintf("invalid lv: %d", lv))
-}
-
-func getGadmBaseSelectBuilder(
+func GetGadmBaseSelectBuilder(
 	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
@@ -69,14 +50,14 @@ func getGadmBaseSelectBuilder(
 	return baseQuery
 }
 
-func getGadmFeatureSelectBuilder(
+func GetGadmFeatureSelectBuilder(
 	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
 	limit int,
 ) squirrel.SelectBuilder {
-	baseGadmQuery := getGadmBaseSelectBuilder(lv, gidFilterValue, filterColName, startAtFid, limit)
+	baseGadmQuery := GetGadmBaseSelectBuilder(lv, gidFilterValue, filterColName, startAtFid, limit)
 
 	featureQuery := psql.Select(`json_build_object(
 		'type', 'Feature',
@@ -94,14 +75,14 @@ func getGadmFeatureSelectBuilder(
 	return featureQuery
 }
 
-func buildGadmFeatureCollectionSelectBuilder(
+func BuildGadmFeatureCollectionSelectBuilder(
 	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
 	limit int,
 ) squirrel.SelectBuilder {
-	gadmFeatureQuery := getGadmFeatureSelectBuilder(lv, gidFilterValue, filterColName, startAtFid, limit)
+	gadmFeatureQuery := GetGadmFeatureSelectBuilder(lv, gidFilterValue, filterColName, startAtFid, limit)
 
 	result := psql.Select(
 		`json_build_object(
@@ -112,13 +93,13 @@ func buildGadmFeatureCollectionSelectBuilder(
 	return result
 }
 
-func buildGeojsonSql(
+func BuildGeojsonSql(
 	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
 	limit int) (string, []interface{}, error) {
-	gadmFeatureCollectionQuery := buildGadmFeatureCollectionSelectBuilder(
+	gadmFeatureCollectionQuery := BuildGadmFeatureCollectionSelectBuilder(
 		lv,
 		gidFilterValue,
 		filterColName,
@@ -134,14 +115,14 @@ func buildGeojsonSql(
 	return sql, args, nil
 }
 
-func buildGeojsonFeatureSqlQuery(
+func BuildGeojsonFeatureSqlQuery(
 	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
 	limit int,
 ) (string, []interface{}, error) {
-	gadmFeatureSelectBuilder := getGadmFeatureSelectBuilder(
+	gadmFeatureSelectBuilder := GetGadmFeatureSelectBuilder(
 
 		lv,
 		gidFilterValue,
@@ -158,9 +139,9 @@ func buildGeojsonFeatureSqlQuery(
 	return sql, args, nil
 }
 
-func getNextFidSqlQuery(startAtFid int, pageSize int, filterParams SqlFilterParams) (string, []interface{}, error) {
+func GetNextFidSqlQuery(startAtFid int, pageSize int, filterParams SqlFilterParams) (string, []interface{}, error) {
 	query := psql.Select(fmt.Sprintf("adm.metadata -> '%s'", GADM_QUERY_ORDER_COLUMN_NAME)).
-		From(db.ADM_TABLE).
+		From(ADM_TABLE).
 		Where(squirrel.GtOrEq{fmt.Sprintf("adm.metadata -> '%s'", GADM_QUERY_ORDER_COLUMN_NAME): startAtFid})
 
 	if filterParams.FilterColName != "" {
@@ -180,11 +161,11 @@ func getNextFidSqlQuery(startAtFid int, pageSize int, filterParams SqlFilterPara
 	return sql, args, nil
 }
 
-func getAccessTokenCreatedAtSqlQuery(token string) (string, []interface{}, error) {
+func GetAccessTokenCreatedAtSqlQuery(token string) (string, []interface{}, error) {
 	sql, args, err := psql.
-		Select(db.AccessTokensTable.CreatedAt).
-		From(db.ACCESS_TOKEN_TABLE).
-		Where(squirrel.Eq{db.AccessTokensTable.Token: token}).
+		Select(AccessTokensTable.CreatedAt).
+		From(ACCESS_TOKEN_TABLE).
+		Where(squirrel.Eq{AccessTokensTable.Token: token}).
 		ToSql()
 
 	if err != nil {
@@ -193,11 +174,11 @@ func getAccessTokenCreatedAtSqlQuery(token string) (string, []interface{}, error
 	return sql, args, nil
 }
 
-func getAccessTokenSqlQuery(token string) (string, []interface{}, error) {
+func GetAccessTokenSqlQuery(token string) (string, []interface{}, error) {
 	sql, args, err := psql.
-		Select(db.AccessTokensTable.CreatedAt, db.AccessTokensTable.CanGenerateAccessTokens).
-		From(db.ACCESS_TOKEN_TABLE).
-		Where(squirrel.Eq{db.AccessTokensTable.Token: token}).
+		Select(AccessTokensTable.CreatedAt, AccessTokensTable.CanGenerateAccessTokens).
+		From(ACCESS_TOKEN_TABLE).
+		Where(squirrel.Eq{AccessTokensTable.Token: token}).
 		ToSql()
 
 	if err != nil {
@@ -206,12 +187,12 @@ func getAccessTokenSqlQuery(token string) (string, []interface{}, error) {
 	return sql, args, nil
 }
 
-func getInsertAccessTokenWithReturningSqlQuery(email string) (string, []interface{}, error) {
+func GetInsertAccessTokenWithReturningSqlQuery(email string) (string, []interface{}, error) {
 	sql, args, err := psql.
-		Insert(db.ACCESS_TOKEN_TABLE).
-		Columns(db.AccessTokensTable.Email).
+		Insert(ACCESS_TOKEN_TABLE).
+		Columns(AccessTokensTable.Email).
 		Values(email).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", db.AccessTokensTable.Token, db.AccessTokensTable.CreatedAt)).
+		Suffix(fmt.Sprintf("RETURNING %s, %s", AccessTokensTable.Token, AccessTokensTable.CreatedAt)).
 		ToSql()
 
 	if err != nil {
@@ -226,7 +207,7 @@ type Point struct {
 	Lng float64 `json:"lng"`
 }
 
-func getReverseGeocodeSqlQuery(point Point) (string, []interface{}, error) {
+func GetReverseGeocodeSqlQuery(point Point) (string, []interface{}, error) {
 	withClause := ` 
 		WITH input_point AS (
 			SELECT ST_SetSRID(ST_MakePoint(?, ?), 4326)::geometry(Point,4326) AS pt

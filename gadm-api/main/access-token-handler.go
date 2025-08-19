@@ -8,6 +8,7 @@ import (
 	"time"
 
 	accessTokenCache "gadm-api/access-token-cache"
+	db "gadm-api/db"
 )
 
 type AccessTokenCreationHandler struct {
@@ -52,7 +53,7 @@ func (handler *AccessTokenCreationHandler) handle() {
 		return
 	}
 
-	sql, args, err := getAccessTokenSqlQuery(token)
+	sql, args, err := db.GetAccessTokenSqlQuery(token)
 	if err != nil {
 		logger.Error("failed_to_get_access_token_sql_query %v", err)
 		http.Error(handler.writer, "internal_server_error", http.StatusInternalServerError)
@@ -85,7 +86,7 @@ func (handler *AccessTokenCreationHandler) handle() {
 		return
 	}
 
-	insertSql, insertArgs, err := getInsertAccessTokenWithReturningSqlQuery(email)
+	insertSql, insertArgs, err := db.GetInsertAccessTokenWithReturningSqlQuery(email)
 	if err != nil {
 		logger.Error("failed_to_get_insert_access_token_sql_query %v", err)
 		http.Error(handler.writer, "internal_server_error", http.StatusInternalServerError)

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+
+	db "gadm-api/db"
 )
 
 type PaginationParams struct {
@@ -44,7 +46,7 @@ func getPaginationParams(r *http.Request) (PaginationParams, error) {
 func getNextPageUrlQueryParams(
 	nextStartAtFid int,
 	pageSize int,
-	filterParams SqlFilterParams) ([]QueryParam, error) {
+	filterParams db.SqlFilterParams) ([]QueryParam, error) {
 
 	nextUrlQueryParams := []QueryParam{
 		{
@@ -89,8 +91,8 @@ func getFilterUrlQueryParameterForFilterableColumnName(filterableColName string)
 	}
 }
 
-func getSqlFilterParamsFromUrl(filterableColNames []string, urlValues url.Values) SqlFilterParams {
-	var result SqlFilterParams
+func getSqlFilterParamsFromUrl(filterableColNames []string, urlValues url.Values) db.SqlFilterParams {
+	var result db.SqlFilterParams
 	for _, filterColName := range filterableColNames {
 		filterUrlParamName, err := getFilterUrlQueryParameterForFilterableColumnName(filterColName)
 		if err != nil {

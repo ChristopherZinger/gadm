@@ -98,7 +98,7 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 		logger.Error("failed_to_get_next_fid %v", err)
 	}
 
-	sql, args, err := buildGadmFeatureCollectionSelectBuilder(
+	sql, args, err := db.BuildGadmFeatureCollectionSelectBuilder(
 		handler.gadmLevel, filterParams.FilterVal, filterParams.FilterColName, startAtFid, pageSize).ToSql()
 
 	var featureCollectionJSON json.RawMessage
@@ -114,7 +114,7 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 	handler.writer.Write(featureCollectionJSON)
 }
 
-func (handler *GadmFeatureCollectionHandler) getNextPageUrl(startAtFid int, pageSize int, filterParams SqlFilterParams) (string, error) {
+func (handler *GadmFeatureCollectionHandler) getNextPageUrl(startAtFid int, pageSize int, filterParams db.SqlFilterParams) (string, error) {
 	nextStartAtFid, err := getNextFid(
 		handler.ctx,
 		handler.pgConn,
@@ -139,7 +139,7 @@ func (handler *GadmFeatureCollectionHandler) getNextPageUrl(startAtFid int, page
 func (handler *GadmFeatureCollectionHandler) getNextFid(
 	startAtFid int,
 	pageSize int,
-	filterParams SqlFilterParams) (int, error) {
+	filterParams db.SqlFilterParams) (int, error) {
 
 	return getNextFid(
 		handler.ctx,
