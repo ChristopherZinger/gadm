@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	geojson "github.com/paulmach/go.geojson"
-	// geojson "github.com/paulmach/go.geojson"
+
+	utils "gadm-api/utils"
 )
 
 type ReverseGeocodeHandler struct {
@@ -26,8 +27,8 @@ func NewReverseGeocodeHandler(
 }
 
 type ReverseGeocodeResponse struct {
-	Level GadmLevel `json:"level"`
-	Id    string    `json:"id"`
+	Level utils.GadmLevel `json:"level"`
+	Id    string          `json:"id"`
 }
 
 func (handler *ReverseGeocodeHandler) handle() {

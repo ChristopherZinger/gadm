@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	utils "gadm-api/utils"
 )
 
 type HandlerInfo struct {
@@ -37,7 +39,7 @@ func getBaseApiUrl() *url.URL {
 	return u
 }
 
-func getApiUrl(endpointType EndpointType, gadmLevel GadmLevel, queryParams ...QueryParam) string {
+func getApiUrl(endpointType EndpointType, gadmLevel utils.GadmLevel, queryParams ...QueryParam) string {
 	u := &url.URL{
 		Path: fmt.Sprintf("%s%s/lv%d", getBaseApiUrl().Path, endpointType, gadmLevel),
 	}
@@ -51,10 +53,10 @@ func getApiUrl(endpointType EndpointType, gadmLevel GadmLevel, queryParams ...Qu
 	return u.String()
 }
 
-func getFeatureCollectionUrl(gadmLevel GadmLevel, queryParams ...QueryParam) string {
+func getFeatureCollectionUrl(gadmLevel utils.GadmLevel, queryParams ...QueryParam) string {
 	return getApiUrl(featureCollectionEndpoint, gadmLevel, queryParams...)
 }
 
-func getGeojsonlUrl(gadmLevel GadmLevel, queryParams ...QueryParam) string {
+func getGeojsonlUrl(gadmLevel utils.GadmLevel, queryParams ...QueryParam) string {
 	return getApiUrl(geojsonlEndpoint, gadmLevel, queryParams...)
 }

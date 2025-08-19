@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"gadm-api/logger"
 
-	db "gadm-api/db"
-
 	"github.com/Masterminds/squirrel"
+
+	db "gadm-api/db"
+	utils "gadm-api/utils"
 )
 
 var GADM_QUERY_ORDER_COLUMN_NAME = "fid"
@@ -24,26 +25,26 @@ type SqlQueryParams struct {
 	SqlFilterParams
 }
 
-func getGidForLv(lv GadmLevel) string {
+func getGidForLv(lv utils.GadmLevel) string {
 	switch lv {
-	case GadmLevel0:
+	case utils.GadmLevel0:
 		return "gid_0"
-	case GadmLevel1:
+	case utils.GadmLevel1:
 		return "gid_1"
-	case GadmLevel2:
+	case utils.GadmLevel2:
 		return "gid_2"
-	case GadmLevel3:
+	case utils.GadmLevel3:
 		return "gid_3"
-	case GadmLevel4:
+	case utils.GadmLevel4:
 		return "gid_4"
-	case GadmLevel5:
+	case utils.GadmLevel5:
 		return "gid_5"
 	}
 	panic(fmt.Sprintf("invalid lv: %d", lv))
 }
 
 func getGadmBaseSelectBuilder(
-	lv GadmLevel,
+	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
@@ -69,7 +70,7 @@ func getGadmBaseSelectBuilder(
 }
 
 func getGadmFeatureSelectBuilder(
-	lv GadmLevel,
+	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
@@ -94,7 +95,7 @@ func getGadmFeatureSelectBuilder(
 }
 
 func buildGadmFeatureCollectionSelectBuilder(
-	lv GadmLevel,
+	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
@@ -112,7 +113,7 @@ func buildGadmFeatureCollectionSelectBuilder(
 }
 
 func buildGeojsonSql(
-	lv GadmLevel,
+	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
@@ -134,7 +135,7 @@ func buildGeojsonSql(
 }
 
 func buildGeojsonFeatureSqlQuery(
-	lv GadmLevel,
+	lv utils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,

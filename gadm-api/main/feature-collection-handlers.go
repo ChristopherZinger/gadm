@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	db "gadm-api/db"
 	"gadm-api/logger"
 	"net/http"
+
+	db "gadm-api/db"
+	utils "gadm-api/utils"
 )
 
 type FeatureCollectionHandlerQueryConfig struct {
@@ -24,37 +26,37 @@ type GadmFeatureCollectionHandler struct {
 	req       *http.Request
 	writer    http.ResponseWriter
 	ctx       context.Context
-	gadmLevel GadmLevel
+	gadmLevel utils.GadmLevel
 	config    GeojsonlHandlerQueryConfig
 }
 
-var featureCollectionHandlerQueryConfig = map[GadmLevel]FeatureCollectionHandlerQueryConfig{
-	GadmLevel0: {
+var featureCollectionHandlerQueryConfig = map[utils.GadmLevel]FeatureCollectionHandlerQueryConfig{
+	utils.GadmLevel0: {
 		QueryLimitConfig: QueryLimitConfig{minLimit: 1, maxLimit: 5},
 	},
-	GadmLevel1: {
+	utils.GadmLevel1: {
 		FilterableColumns: arrayToStrings(db.GidName0),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 5},
 	},
-	GadmLevel2: {
+	utils.GadmLevel2: {
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
 	},
-	GadmLevel3: {
+	utils.GadmLevel3: {
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
 	},
-	GadmLevel4: {
+	utils.GadmLevel4: {
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 	},
-	GadmLevel5: {
+	utils.GadmLevel5: {
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 	},
 }
 
-var supportedGadmLevelsForFeatureCollection = []GadmLevel{GadmLevel0, GadmLevel1, GadmLevel2, GadmLevel3, GadmLevel4, GadmLevel5}
+var supportedGadmLevelsForFeatureCollection = []utils.GadmLevel{utils.GadmLevel0, utils.GadmLevel1, utils.GadmLevel2, utils.GadmLevel3, utils.GadmLevel4, utils.GadmLevel5}
 
 func (handler *GadmFeatureCollectionHandler) setFeatureCollectionResponseHeaders(nextUrl string) {
 	handler.writer.Header().Set("Content-Type", "application/json")
@@ -152,7 +154,7 @@ func newGadmFeatureCollectionHandler(
 	pgConn *PgConn,
 	r *http.Request,
 	w http.ResponseWriter,
-	gadmLevel GadmLevel,
+	gadmLevel utils.GadmLevel,
 ) *GadmFeatureCollectionHandler {
 
 	return &GadmFeatureCollectionHandler{
