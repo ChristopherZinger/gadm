@@ -35,7 +35,7 @@ func GetAuthTokenFromRequest(r *http.Request) (string, error) {
 	return "", errors.New("missing_token")
 }
 
-func GetAuthMiddleWare(pgConn *PgConn) func(http.Handler) http.Handler {
+func GetAuthMiddleWare(pgConn *db.PgConn) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, err := GetAuthTokenFromRequest(r)
@@ -77,11 +77,11 @@ func GetAuthMiddleWare(pgConn *PgConn) func(http.Handler) http.Handler {
 
 const NOT_RESULTS_FOR_QUERY_PG_MSG = "no rows in result set"
 
-func getTokenCreatedAtFromDb(ctx context.Context, pgConn *PgConn, token string) (time.Time, error) {
+func getTokenCreatedAtFromDb(ctx context.Context, pgConn *db.PgConn, token string) (time.Time, error) {
 	sql, args, err := db.GetAccessTokenCreatedAtSqlQuery(token)
 
 	var createdAt time.Time
-	err = pgConn.db.QueryRow(ctx, sql, args...).Scan(&createdAt)
+	err = pgConn.Db.QueryRow(ctx, sql, args...).Scan(&createdAt)
 	if err != nil {
 		logger.Error("%v", err)
 		if err.Error() == NOT_RESULTS_FOR_QUERY_PG_MSG {

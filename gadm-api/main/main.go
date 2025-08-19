@@ -7,15 +7,12 @@ import (
 	"net/http"
 	"os"
 
+	db "gadm-api/db"
 	"gadm-api/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
-
-type PgConn struct {
-	db *pgxpool.Pool
-}
 
 var DATABASE_URL_ENV_VAR = "DATABASE_URL"
 
@@ -36,7 +33,7 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	pgConn := getPgConnector(dbPool)
+	pgConn := db.CreatePgConnector(dbPool)
 	mux := http.NewServeMux()
 
 	geojsonlHandlers, err := CreateGeojsonlHandlers(pgConn)
@@ -63,8 +60,4 @@ func main() {
 
 	logger.Info("server_starting_on_port_8080")
 	log.Fatal(http.ListenAndServe(":8080", handler))
-}
-
-func getPgConnector(db *pgxpool.Pool) *PgConn {
-	return &PgConn{db: db}
 }

@@ -13,7 +13,7 @@ import (
 )
 
 type ReverseGeocodeHandler struct {
-	pgConn *PgConn
+	pgConn *db.PgConn
 	req    *http.Request
 	writer http.ResponseWriter
 	ctx    context.Context
@@ -23,7 +23,7 @@ func NewReverseGeocodeHandler(
 	ctx context.Context,
 	req *http.Request,
 	writer http.ResponseWriter,
-	pgConn *PgConn) *ReverseGeocodeHandler {
+	pgConn *db.PgConn) *ReverseGeocodeHandler {
 	return &ReverseGeocodeHandler{pgConn: pgConn, req: req, writer: writer, ctx: ctx}
 }
 
@@ -69,7 +69,7 @@ func (handler *ReverseGeocodeHandler) handle() {
 	}
 
 	var jsonResult []byte
-	err = handler.pgConn.db.QueryRow(handler.ctx, sql, args...).Scan(&jsonResult)
+	err = handler.pgConn.Db.QueryRow(handler.ctx, sql, args...).Scan(&jsonResult)
 	if err != nil {
 		logger.Error("failed_to_query_database %v", err)
 		http.Error(handler.writer, "no_result_found", http.StatusNotFound)

@@ -22,7 +22,7 @@ type FeatureCollectionHandlerQueryConfig struct {
 }
 
 type GadmFeatureCollectionHandler struct {
-	pgConn    *PgConn
+	pgConn    *db.PgConn
 	req       *http.Request
 	writer    http.ResponseWriter
 	ctx       context.Context
@@ -65,7 +65,7 @@ func (handler *GadmFeatureCollectionHandler) setFeatureCollectionResponseHeaders
 	}
 }
 
-func CreateFeatureCollectionHandlers(s *PgConn) ([]HandlerInfo, error) {
+func CreateFeatureCollectionHandlers(s *db.PgConn) ([]HandlerInfo, error) {
 	handlerInfos := []HandlerInfo{}
 	for _, gadmLevel := range supportedGadmLevelsForFeatureCollection {
 		url := getFeatureCollectionUrl(gadmLevel)
@@ -102,7 +102,7 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 		handler.gadmLevel, filterParams.FilterVal, filterParams.FilterColName, startAtFid, pageSize).ToSql()
 
 	var featureCollectionJSON json.RawMessage
-	err = handler.pgConn.db.QueryRow(handler.ctx, sql, args...).
+	err = handler.pgConn.Db.QueryRow(handler.ctx, sql, args...).
 		Scan(&featureCollectionJSON)
 	if err != nil {
 		logger.Error("failed_to_query_database %v", err)
@@ -151,7 +151,7 @@ func (handler *GadmFeatureCollectionHandler) getNextFid(
 }
 
 func newGadmFeatureCollectionHandler(
-	pgConn *PgConn,
+	pgConn *db.PgConn,
 	r *http.Request,
 	w http.ResponseWriter,
 	gadmLevel utils.GadmLevel,

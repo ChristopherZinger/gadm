@@ -22,7 +22,7 @@ type GeojsonlHandlerQueryConfig struct {
 }
 
 type GadmGeojsonlHandler struct {
-	pgConn    *PgConn
+	pgConn    *db.PgConn
 	req       *http.Request
 	writer    http.ResponseWriter
 	ctx       context.Context
@@ -72,7 +72,7 @@ func (handler *GadmGeojsonlHandler) setGeojsonlStreamingResponseHeaders(nextUrl 
 	}
 }
 
-func CreateGeojsonlHandlers(pgConn *PgConn) ([]HandlerInfo, error) {
+func CreateGeojsonlHandlers(pgConn *db.PgConn) ([]HandlerInfo, error) {
 	handlerInfos := []HandlerInfo{}
 	for _, gadmLevel := range supportedGadmLevelsForGeojsonl {
 		url := getGeojsonlUrl(gadmLevel)
@@ -161,7 +161,7 @@ func (handler *GadmGeojsonlHandler) queryAdmGeoJsonl(queryParams db.SqlQueryPara
 		return fmt.Errorf("failed to build sql query: %w", err)
 	}
 
-	rows, err := handler.pgConn.db.Query(handler.ctx, sql, args...)
+	rows, err := handler.pgConn.Db.Query(handler.ctx, sql, args...)
 	if err != nil {
 		logger.Error("failed_to_query_database %v", err)
 		return fmt.Errorf("failed to query database: %w", err)
@@ -206,7 +206,7 @@ func (handler *GadmGeojsonlHandler) streamRows(rows pgx.Rows) error {
 }
 
 func newGadmGeojsonlHandler(
-	pgConn *PgConn,
+	pgConn *db.PgConn,
 	r *http.Request,
 	w http.ResponseWriter,
 	gadmLevel utils.GadmLevel,

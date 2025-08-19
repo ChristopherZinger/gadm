@@ -12,14 +12,14 @@ import (
 )
 
 type AccessTokenCreationHandler struct {
-	pgConn *PgConn
+	pgConn *db.PgConn
 	req    *http.Request
 	writer http.ResponseWriter
 	ctx    context.Context
 }
 
 func NewAccessTokenCreationHandler(
-	pgConn *PgConn,
+	pgConn *db.PgConn,
 	req *http.Request,
 	writer http.ResponseWriter,
 	ctx context.Context) *AccessTokenCreationHandler {
@@ -62,7 +62,7 @@ func (handler *AccessTokenCreationHandler) handle() {
 
 	var createdAt time.Time
 	var canGenerateAccessTokens bool
-	err = handler.pgConn.db.QueryRow(handler.ctx, sql, args...).Scan(&createdAt, &canGenerateAccessTokens)
+	err = handler.pgConn.Db.QueryRow(handler.ctx, sql, args...).Scan(&createdAt, &canGenerateAccessTokens)
 	if err != nil {
 		if err.Error() == NOT_RESULTS_FOR_QUERY_PG_MSG {
 			logger.Error("token_not_found token=%s", token)
@@ -95,7 +95,7 @@ func (handler *AccessTokenCreationHandler) handle() {
 
 	var createdToken string
 	var tokenCreatedAt time.Time
-	err = handler.pgConn.db.QueryRow(handler.ctx, insertSql, insertArgs...).Scan(&createdToken, &tokenCreatedAt)
+	err = handler.pgConn.Db.QueryRow(handler.ctx, insertSql, insertArgs...).Scan(&createdToken, &tokenCreatedAt)
 	if err != nil {
 		logger.Error("failed_to_insert_access_token %v", err)
 		http.Error(handler.writer, "internal_server_error", http.StatusInternalServerError)

@@ -10,7 +10,7 @@ import (
 
 func getNextFid(
 	ctx context.Context,
-	pgConn *PgConn,
+	pgConn *db.PgConn,
 	startAt int,
 	pageSize int,
 	filterParams db.SqlFilterParams) (int, error) {
@@ -18,7 +18,7 @@ func getNextFid(
 	sql, args, err := db.GetNextFidSqlQuery(startAt, pageSize, filterParams)
 
 	var nextFid int
-	err = pgConn.db.QueryRow(ctx, sql, args...).Scan(&nextFid)
+	err = pgConn.Db.QueryRow(ctx, sql, args...).Scan(&nextFid)
 	if err != nil {
 		logger.Error("failed_to_query_database %v", err)
 		return 0, fmt.Errorf("failed_to_get_next_fid %v", err)
