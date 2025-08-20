@@ -8,6 +8,7 @@ import (
 
 	db "gadm-api/db"
 	repo "gadm-api/db/repo"
+	dbutils "gadm-api/db/utils"
 	utils "gadm-api/utils"
 )
 
@@ -117,13 +118,15 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 }
 
 func (handler *GadmFeatureCollectionHandler) getNextPageUrl(startAtFid int, pageSize int, filterParams db.SqlFilterParams) (string, error) {
-	nextStartAtFid, err := getNextFid(
-		handler.ctx,
-		handler.pgConn,
-		startAtFid,
-		pageSize,
-		filterParams,
-	)
+	nextStartAtFid, err := dbutils.GetNextPageFid(dbutils.NextPageParams{
+		Context:       handler.ctx,
+		PgConn:        handler.pgConn,
+		StartAt:       startAtFid,
+		PageSize:      pageSize,
+		FilterColName: filterParams.FilterColName,
+		FilterVal:     filterParams.FilterVal,
+	})
+
 	if err != nil {
 		return "", fmt.Errorf("failed_to_get_next_start_at_fid %v", err)
 	}
@@ -135,21 +138,7 @@ func (handler *GadmFeatureCollectionHandler) getNextPageUrl(startAtFid int, page
 	if err != nil {
 		return "", fmt.Errorf("failed_to_get_next_page_url_query_params %v", err)
 	}
-	return getGeojsonlUrl(handler.gadmLevel, nextUrlParams...), nil
-}
-
-func (handler *GadmFeatureCollectionHandler) getNextFid(
-	startAtFid int,
-	pageSize int,
-	filterParams db.SqlFilterParams) (int, error) {
-
-	return getNextFid(
-		handler.ctx,
-		handler.pgConn,
-		startAtFid,
-		pageSize,
-		filterParams,
-	)
+	return getFeatureCollectionUrl(handler.gadmLevel, nextUrlParams...), nil
 }
 
 func newGadmFeatureCollectionHandler(

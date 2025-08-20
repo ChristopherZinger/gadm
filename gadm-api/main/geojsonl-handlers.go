@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	db "gadm-api/db"
+	dbutils "gadm-api/db/utils"
 	utils "gadm-api/utils"
 
 	"gadm-api/logger"
@@ -130,13 +131,14 @@ func (handler *GadmGeojsonlHandler) getNextPageUrl(
 	pageSize int,
 	filterParams db.SqlFilterParams) (string, error) {
 
-	nextStartAtFid, err := getNextFid(
-		handler.ctx,
-		handler.pgConn,
-		startAtFid,
-		pageSize,
-		filterParams,
-	)
+	nextStartAtFid, err := dbutils.GetNextPageFid(dbutils.NextPageParams{
+		Context:       handler.ctx,
+		PgConn:        handler.pgConn,
+		StartAt:       startAtFid,
+		PageSize:      pageSize,
+		FilterColName: filterParams.FilterColName,
+		FilterVal:     filterParams.FilterVal,
+	})
 	if err != nil {
 		return "", fmt.Errorf("failed_to_get_next_start_at_fid %v", err)
 	}

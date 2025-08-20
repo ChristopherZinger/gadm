@@ -126,19 +126,37 @@ func BuildGeojsonFeatureSqlQuery(
 	return sql, args, nil
 }
 
-func GetNextFidSqlQuery(startAtFid int, pageSize int, filterParams SqlFilterParams) (string, []interface{}, error) {
-	query := psql.Select(fmt.Sprintf("adm.metadata -> '%s'", GADM_QUERY_ORDER_COLUMN_NAME)).
-		From(ADM_TABLE).
-		Where(squirrel.GtOrEq{fmt.Sprintf("adm.metadata -> '%s'", GADM_QUERY_ORDER_COLUMN_NAME): startAtFid})
+type GetNextFidSqlQueryParams struct {
+	StartAtFid    int
+	PageSize      int
+	FilterColName string
+	FilterVal     string
+}
 
-	if filterParams.FilterColName != "" {
+func GetNextFidSqlQuery(params GetNextFidSqlQueryParams) (string, []interface{}, error) {
+	query := psql.Select(
+		fmt.Sprintf("adm.metadata ->> '%s'",
+			GADM_QUERY_ORDER_COLUMN_NAME),
+	).
+		From(ADM_TABLE).
+		Where(squirrel.GtOrEq{
+			fmt.Sprintf("adm.metadata -> '%s'",
+				GADM_QUERY_ORDER_COLUMN_NAME): params.StartAtFid,
+		})
+
+	if params.FilterColName != "" {
 		query = query.Where(squirrel.Eq{
-			fmt.Sprintf("adm.metadata ->> '%s'", filterParams.FilterColName): filterParams.FilterVal})
+			fmt.Sprintf("adm.metadata ->> '%s'",
+				params.FilterColName): params.FilterVal,
+		})
 	}
 
-	query = query.OrderBy(fmt.Sprintf("adm.metadata -> '%s'", GADM_QUERY_ORDER_COLUMN_NAME)).
-		Limit(uint64(pageSize)).
-		Offset(uint64(pageSize))
+	query = query.OrderBy(
+		fmt.Sprintf("adm.metadata -> '%s'",
+			GADM_QUERY_ORDER_COLUMN_NAME),
+	).
+		Limit(uint64(params.PageSize)).
+		Offset(uint64(params.PageSize))
 
 	sql, args, err := query.ToSql()
 	if err != nil {
