@@ -8,16 +8,23 @@ import (
 	"gadm-api/logger"
 )
 
+type NextPageRepo struct {
+	pgConn *db.PgConn
+	ctx    context.Context
+}
+
+func NewNextPageRepo(pgConn *db.PgConn, ctx context.Context) *NextPageRepo {
+	return &NextPageRepo{pgConn: pgConn, ctx: ctx}
+}
+
 type NextPageParams struct {
-	Context       context.Context
-	PgConn        *db.PgConn
 	StartAt       int
 	PageSize      int
 	FilterColName string
 	FilterVal     string
 }
 
-func GetNextPageFid(
+func (repo *NextPageRepo) GetNextPageFid(
 	params NextPageParams,
 ) (int, error) {
 
@@ -29,7 +36,7 @@ func GetNextPageFid(
 	})
 
 	var nextFid int
-	err = params.PgConn.Db.QueryRow(params.Context, sql, args...).Scan(&nextFid)
+	err = repo.pgConn.Db.QueryRow(repo.ctx, sql, args...).Scan(&nextFid)
 	if err != nil {
 		logger.Error("failed_to_query_database %v", err)
 		return 0, fmt.Errorf("failed_to_get_next_fid %v", err)

@@ -23,12 +23,13 @@ type GeojsonlHandlerQueryConfig struct {
 }
 
 type GadmGeojsonlHandler struct {
-	pgConn    *db.PgConn
-	req       *http.Request
-	writer    http.ResponseWriter
-	ctx       context.Context
-	gadmLevel utils.GadmLevel
-	config    GeojsonlHandlerQueryConfig
+	pgConn       *db.PgConn
+	req          *http.Request
+	writer       http.ResponseWriter
+	ctx          context.Context
+	gadmLevel    utils.GadmLevel
+	config       GeojsonlHandlerQueryConfig
+	nextPageRepo *dbutils.NextPageRepo
 }
 
 type QueryLimitConfig struct {
@@ -131,9 +132,7 @@ func (handler *GadmGeojsonlHandler) getNextPageUrl(
 	pageSize int,
 	filterParams db.SqlFilterParams) (string, error) {
 
-	nextStartAtFid, err := dbutils.GetNextPageFid(dbutils.NextPageParams{
-		Context:       handler.ctx,
-		PgConn:        handler.pgConn,
+	nextStartAtFid, err := handler.nextPageRepo.GetNextPageFid(dbutils.NextPageParams{
 		StartAt:       startAtFid,
 		PageSize:      pageSize,
 		FilterColName: filterParams.FilterColName,
@@ -214,12 +213,16 @@ func newGadmGeojsonlHandler(
 	gadmLevel utils.GadmLevel,
 ) *GadmGeojsonlHandler {
 
+	ctx := r.Context()
+	nextPageRepo := dbutils.NewNextPageRepo(pgConn, ctx)
+
 	return &GadmGeojsonlHandler{
-		pgConn:    pgConn,
-		req:       r,
-		writer:    w,
-		ctx:       r.Context(),
-		config:    geojsonHandlerQueryConfig[gadmLevel],
-		gadmLevel: gadmLevel,
+		pgConn:       pgConn,
+		req:          r,
+		writer:       w,
+		ctx:          ctx,
+		config:       geojsonHandlerQueryConfig[gadmLevel],
+		gadmLevel:    gadmLevel,
+		nextPageRepo: nextPageRepo,
 	}
 }

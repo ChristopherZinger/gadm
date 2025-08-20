@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"gadm-api/logger"
 	"net/http"
@@ -23,13 +22,12 @@ type FeatureCollectionHandlerQueryConfig struct {
 }
 
 type GadmFeatureCollectionHandler struct {
-	fcRepo    *repo.FeatureCollectionRepo
-	pgConn    *db.PgConn
-	req       *http.Request
-	writer    http.ResponseWriter
-	ctx       context.Context
-	gadmLevel utils.GadmLevel
-	config    GeojsonlHandlerQueryConfig
+	fcRepo       *repo.FeatureCollectionRepo
+	nextPageRepo *dbutils.NextPageRepo
+	req          *http.Request
+	writer       http.ResponseWriter
+	gadmLevel    utils.GadmLevel
+	config       GeojsonlHandlerQueryConfig
 }
 
 var featureCollectionHandlerQueryConfig = map[utils.GadmLevel]FeatureCollectionHandlerQueryConfig{
@@ -117,15 +115,18 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 	handler.writer.Write(featureCollectionJSON)
 }
 
-func (handler *GadmFeatureCollectionHandler) getNextPageUrl(startAtFid int, pageSize int, filterParams db.SqlFilterParams) (string, error) {
-	nextStartAtFid, err := dbutils.GetNextPageFid(dbutils.NextPageParams{
-		Context:       handler.ctx,
-		PgConn:        handler.pgConn,
-		StartAt:       startAtFid,
-		PageSize:      pageSize,
-		FilterColName: filterParams.FilterColName,
-		FilterVal:     filterParams.FilterVal,
-	})
+func (handler *GadmFeatureCollectionHandler) getNextPageUrl(
+	startAtFid int,
+	pageSize int,
+	filterParams db.SqlFilterParams,
+) (string, error) {
+	nextStartAtFid, err := handler.nextPageRepo.GetNextPageFid(
+		dbutils.NextPageParams{
+			StartAt:       startAtFid,
+			PageSize:      pageSize,
+			FilterColName: filterParams.FilterColName,
+			FilterVal:     filterParams.FilterVal,
+		})
 
 	if err != nil {
 		return "", fmt.Errorf("failed_to_get_next_start_at_fid %v", err)
@@ -149,14 +150,15 @@ func newGadmFeatureCollectionHandler(
 ) *GadmFeatureCollectionHandler {
 
 	ctx := r.Context()
+	nextPageRepo := dbutils.NewNextPageRepo(pgConn, ctx)
+	fcRepo := repo.NewFeatureCollectionRepo(pgConn, ctx)
 
 	return &GadmFeatureCollectionHandler{
-		pgConn:    pgConn,
-		req:       r,
-		writer:    w,
-		ctx:       ctx,
-		config:    geojsonHandlerQueryConfig[gadmLevel],
-		gadmLevel: gadmLevel,
-		fcRepo:    repo.NewFeatureCollectionRepo(pgConn, ctx),
+		req:          r,
+		writer:       w,
+		fcRepo:       fcRepo,
+		nextPageRepo: nextPageRepo,
+		config:       geojsonHandlerQueryConfig[gadmLevel],
+		gadmLevel:    gadmLevel,
 	}
 }
