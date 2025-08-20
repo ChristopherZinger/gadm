@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	db "gadm-api/db"
+	repo "gadm-api/db/repo"
 	dbutils "gadm-api/db/utils"
 	utils "gadm-api/utils"
 
@@ -23,13 +24,13 @@ type GeojsonlHandlerQueryConfig struct {
 }
 
 type GadmGeojsonlHandler struct {
-	pgConn       *db.PgConn
 	req          *http.Request
 	writer       http.ResponseWriter
 	ctx          context.Context
 	gadmLevel    utils.GadmLevel
 	config       GeojsonlHandlerQueryConfig
 	nextPageRepo *dbutils.NextPageRepo
+	geojsonlRepo *repo.GeojsonlRepo
 }
 
 type QueryLimitConfig struct {
@@ -150,22 +151,16 @@ func (handler *GadmGeojsonlHandler) getNextPageUrl(
 }
 
 func (handler *GadmGeojsonlHandler) queryAdmGeoJsonl(queryParams db.SqlQueryParams) error {
-	sql, args, err := db.BuildGeojsonFeatureSqlQuery(
-		handler.gadmLevel,
-		queryParams.FilterVal,
-		queryParams.FilterColName,
-		queryParams.StartAtValue,
-		queryParams.LimitValue,
-	)
+	rows, err := handler.geojsonlRepo.GetGeojsonl(repo.GetGeojsonlParams{
+		GadmLevel:     handler.gadmLevel,
+		FilterVal:     queryParams.FilterVal,
+		FilterColName: queryParams.FilterColName,
+		StartAtValue:  queryParams.StartAtValue,
+		LimitValue:    queryParams.LimitValue,
+	})
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)
 		return fmt.Errorf("failed to build sql query: %w", err)
-	}
-
-	rows, err := handler.pgConn.Db.Query(handler.ctx, sql, args...)
-	if err != nil {
-		logger.Error("failed_to_query_database %v", err)
-		return fmt.Errorf("failed to query database: %w", err)
 	}
 	defer rows.Close()
 
@@ -215,14 +210,15 @@ func newGadmGeojsonlHandler(
 
 	ctx := r.Context()
 	nextPageRepo := dbutils.NewNextPageRepo(pgConn, ctx)
+	geojsonlRepo := repo.NewGeojsonlRepo(pgConn, ctx)
 
 	return &GadmGeojsonlHandler{
-		pgConn:       pgConn,
 		req:          r,
 		writer:       w,
 		ctx:          ctx,
 		config:       geojsonHandlerQueryConfig[gadmLevel],
 		gadmLevel:    gadmLevel,
 		nextPageRepo: nextPageRepo,
+		geojsonlRepo: geojsonlRepo,
 	}
 }
