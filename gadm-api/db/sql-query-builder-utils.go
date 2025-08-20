@@ -75,14 +75,23 @@ func GetGadmFeatureSelectBuilder(
 	return featureQuery
 }
 
+type GadmFeatureCollectionSelectBuilderParams struct {
+	GadmLevel     utils.GadmLevel
+	FilterValue   string
+	FilterColName string
+	StartAtFid    int
+	PageSize      int
+}
+
 func BuildGadmFeatureCollectionSelectBuilder(
-	lv utils.GadmLevel,
-	gidFilterValue string,
-	filterColName string,
-	startAtFid int,
-	limit int,
+	params GadmFeatureCollectionSelectBuilderParams,
 ) squirrel.SelectBuilder {
-	gadmFeatureQuery := GetGadmFeatureSelectBuilder(lv, gidFilterValue, filterColName, startAtFid, limit)
+	gadmFeatureQuery := GetGadmFeatureSelectBuilder(
+		params.GadmLevel,
+		params.FilterValue,
+		params.FilterColName,
+		params.StartAtFid,
+		params.PageSize)
 
 	result := psql.Select(
 		`json_build_object(

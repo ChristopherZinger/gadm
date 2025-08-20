@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"gadm-api/logger"
 	"net/http"
 
 	db "gadm-api/db"
+	repo "gadm-api/db/repo"
 	utils "gadm-api/utils"
 )
 
@@ -22,6 +22,7 @@ type FeatureCollectionHandlerQueryConfig struct {
 }
 
 type GadmFeatureCollectionHandler struct {
+	fcRepo    *repo.FeatureCollectionRepo
 	pgConn    *db.PgConn
 	req       *http.Request
 	writer    http.ResponseWriter
@@ -98,14 +99,15 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 		logger.Error("failed_to_get_next_fid %v", err)
 	}
 
-	sql, args, err := db.BuildGadmFeatureCollectionSelectBuilder(
-		handler.gadmLevel, filterParams.FilterVal, filterParams.FilterColName, startAtFid, pageSize).ToSql()
-
-	var featureCollectionJSON json.RawMessage
-	err = handler.pgConn.Db.QueryRow(handler.ctx, sql, args...).
-		Scan(&featureCollectionJSON)
+	featureCollectionJSON, err := handler.fcRepo.GetFeatureCollection(repo.GetFeatureCollectionParams{
+		GadmLevel:     handler.gadmLevel,
+		FilterValue:   filterParams.FilterVal,
+		FilterColName: filterParams.FilterColName,
+		StartAtFid:    startAtFid,
+		PageSize:      pageSize,
+	})
 	if err != nil {
-		logger.Error("failed_to_query_database %v", err)
+		logger.Error("failed_to_get_feature_collection %v", err)
 		http.Error(handler.writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -157,12 +159,15 @@ func newGadmFeatureCollectionHandler(
 	gadmLevel utils.GadmLevel,
 ) *GadmFeatureCollectionHandler {
 
+	ctx := r.Context()
+
 	return &GadmFeatureCollectionHandler{
 		pgConn:    pgConn,
 		req:       r,
 		writer:    w,
-		ctx:       r.Context(),
+		ctx:       ctx,
 		config:    geojsonHandlerQueryConfig[gadmLevel],
 		gadmLevel: gadmLevel,
+		fcRepo:    repo.NewFeatureCollectionRepo(pgConn, ctx),
 	}
 }
