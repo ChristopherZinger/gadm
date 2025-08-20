@@ -53,7 +53,12 @@ func main() {
 
 	reverseGeocodeUrl := fmt.Sprintf("%sreverse-geocode", getBaseApiUrl().Path)
 	mux.HandleFunc(reverseGeocodeUrl, func(w http.ResponseWriter, r *http.Request) {
-		NewReverseGeocodeHandler(r.Context(), r, w, pgConn).handle()
+		NewReverseGeocodeHandler(
+			r.Context(),
+			pgConn,
+			r,
+			w,
+		).handle()
 	})
 
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))

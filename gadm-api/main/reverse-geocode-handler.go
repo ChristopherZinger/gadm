@@ -9,22 +9,30 @@ import (
 	geojson "github.com/paulmach/go.geojson"
 
 	db "gadm-api/db"
+	rgRepo "gadm-api/db/repo"
 	utils "gadm-api/utils"
 )
 
 type ReverseGeocodeHandler struct {
-	pgConn *db.PgConn
 	req    *http.Request
+	repo   *rgRepo.ReverseGeocodeRepo
 	writer http.ResponseWriter
-	ctx    context.Context
 }
 
 func NewReverseGeocodeHandler(
 	ctx context.Context,
+	pgConn *db.PgConn,
 	req *http.Request,
 	writer http.ResponseWriter,
-	pgConn *db.PgConn) *ReverseGeocodeHandler {
-	return &ReverseGeocodeHandler{pgConn: pgConn, req: req, writer: writer, ctx: ctx}
+) *ReverseGeocodeHandler {
+
+	repo := rgRepo.NewReverseGeocodeRepo(pgConn, ctx)
+
+	return &ReverseGeocodeHandler{
+		req:    req,
+		writer: writer,
+		repo:   repo,
+	}
 }
 
 type ReverseGeocodeResponse struct {
@@ -59,20 +67,15 @@ func (handler *ReverseGeocodeHandler) handle() {
 		return
 	}
 
-	lng := geometry.Point[0]
-	lat := geometry.Point[1]
-	sql, args, err := db.GetReverseGeocodeSqlQuery(db.Point{Lat: lat, Lng: lng})
+	jsonResult, err := handler.repo.GetLocation(
+		rgRepo.GetReverseGeocodeParams{
+			Lat: geometry.Point[1],
+			Lng: geometry.Point[0],
+		},
+	)
 	if err != nil {
-		logger.Error("failed_to_build_reverse_geocode_sql %v", err)
+		logger.Error("failed_to_get_location %v", err)
 		http.Error(handler.writer, "internal_server_error", http.StatusInternalServerError)
-		return
-	}
-
-	var jsonResult []byte
-	err = handler.pgConn.Db.QueryRow(handler.ctx, sql, args...).Scan(&jsonResult)
-	if err != nil {
-		logger.Error("failed_to_query_database %v", err)
-		http.Error(handler.writer, "no_result_found", http.StatusNotFound)
 		return
 	}
 
