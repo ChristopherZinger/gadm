@@ -93,28 +93,6 @@ func BuildGadmFeatureCollectionSelectBuilder(
 	return result
 }
 
-func BuildGeojsonSql(
-	lv utils.GadmLevel,
-	gidFilterValue string,
-	filterColName string,
-	startAtFid int,
-	limit int) (string, []interface{}, error) {
-	gadmFeatureCollectionQuery := BuildGadmFeatureCollectionSelectBuilder(
-		lv,
-		gidFilterValue,
-		filterColName,
-		startAtFid,
-		limit)
-
-	sql, args, err := gadmFeatureCollectionQuery.ToSql()
-	if err != nil {
-		logger.Error("failed_to_build_sql_query %v", err)
-		return "", nil, fmt.Errorf("failed to build sql query: %w", err)
-	}
-
-	return sql, args, nil
-}
-
 func BuildGeojsonFeatureSqlQuery(
 	lv utils.GadmLevel,
 	gidFilterValue string,
