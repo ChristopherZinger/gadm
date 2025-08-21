@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 )
 
 type HandlerInfo struct {
-	url     string
-	handler func(w http.ResponseWriter, r *http.Request)
+	Url     string
+	Handler func(w http.ResponseWriter, r *http.Request)
 }
 
 type EndpointType string

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"gadm-api/logger"
 	"io"
 	"net/http"
@@ -30,6 +31,15 @@ func NewReverseGeocodeHandler(
 		req:    req,
 		writer: writer,
 		repo:   repo,
+	}
+}
+
+func GetReverseGeocodeHandlerInfo(pgConn *db.PgConn) HandlerInfo {
+	return HandlerInfo{
+		Url: fmt.Sprintf("%sreverse-geocode", getBaseApiUrl().Path),
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			NewReverseGeocodeHandler(pgConn, r, w).Handle()
+		},
 	}
 }
 

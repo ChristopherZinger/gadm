@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -74,7 +74,7 @@ func CreateFeatureCollectionHandlers(s *db.PgConn) ([]HandlerInfo, error) {
 		handler := func(w http.ResponseWriter, r *http.Request) {
 			newGadmFeatureCollectionHandler(s, r, w, gadmLevel).handle()
 		}
-		handlerInfos = append(handlerInfos, HandlerInfo{url: url, handler: handler})
+		handlerInfos = append(handlerInfos, HandlerInfo{Url: url, Handler: handler})
 	}
 	return handlerInfos, nil
 }

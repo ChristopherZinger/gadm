@@ -1,8 +1,9 @@
-package main
+package handlers
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"gadm-api/logger"
 	"net/http"
 	"time"
@@ -24,6 +25,15 @@ func NewAccessTokenCreationHandler(
 	writer http.ResponseWriter,
 	ctx context.Context) *AccessTokenCreationHandler {
 	return &AccessTokenCreationHandler{pgConn: pgConn, req: req, writer: writer, ctx: ctx}
+}
+
+func GetAccessTokenCreationHandlerInfo(pgConn *db.PgConn) HandlerInfo {
+	return HandlerInfo{
+		Url: fmt.Sprintf("%screate-access-token", getBaseApiUrl().Path),
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			NewAccessTokenCreationHandler(pgConn, r, w, r.Context()).handle()
+		},
+	}
 }
 
 type AccessTokenCreationResponse struct {

@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -84,7 +84,7 @@ func CreateGeojsonlHandlers(pgConn *db.PgConn) ([]HandlerInfo, error) {
 			handler := newGadmGeojsonlHandler(pgConn, r, w, gadmLevel)
 			handler.handle()
 		}
-		handlerInfos = append(handlerInfos, HandlerInfo{url: url, handler: handler})
+		handlerInfos = append(handlerInfos, HandlerInfo{Url: url, Handler: handler})
 	}
 	return handlerInfos, nil
 }

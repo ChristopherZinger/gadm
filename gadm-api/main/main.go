@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -37,26 +36,21 @@ func main() {
 	pgConn := db.CreatePgConnector(dbPool)
 	mux := http.NewServeMux()
 
-	geojsonlHandlers, err := CreateGeojsonlHandlers(pgConn)
+	geojsonlHandlers, err := handlers.CreateGeojsonlHandlers(pgConn)
 	for _, handlerInfo := range geojsonlHandlers {
-		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
+		mux.HandleFunc(handlerInfo.Url, handlerInfo.Handler)
 	}
 
-	featureCollectionHandlers, err := CreateFeatureCollectionHandlers(pgConn)
+	featureCollectionHandlers, err := handlers.CreateFeatureCollectionHandlers(pgConn)
 	for _, handlerInfo := range featureCollectionHandlers {
-		mux.HandleFunc(handlerInfo.url, handlerInfo.handler)
+		mux.HandleFunc(handlerInfo.Url, handlerInfo.Handler)
 	}
 
-	createAccessTokenUrl := fmt.Sprintf("%screate-access-token", getBaseApiUrl().Path)
-	mux.HandleFunc(createAccessTokenUrl, func(w http.ResponseWriter, r *http.Request) {
-		NewAccessTokenCreationHandler(pgConn, r, w, r.Context()).handle()
-	})
+	createAccessTokenHandlerInfo := handlers.GetAccessTokenCreationHandlerInfo(pgConn)
+	mux.HandleFunc(createAccessTokenHandlerInfo.Url, createAccessTokenHandlerInfo.Handler)
 
-	reverseGeocodeUrl := fmt.Sprintf("%sreverse-geocode", getBaseApiUrl().Path)
-	mux.HandleFunc(reverseGeocodeUrl, func(w http.ResponseWriter, r *http.Request) {
-		h := handlers.NewReverseGeocodeHandler(pgConn, r, w)
-		h.Handle()
-	})
+	reverseGeocodeHandlerInfo := handlers.GetReverseGeocodeHandlerInfo(pgConn)
+	mux.HandleFunc(reverseGeocodeHandlerInfo.Url, reverseGeocodeHandlerInfo.Handler)
 
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
 
