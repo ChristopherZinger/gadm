@@ -8,7 +8,9 @@ import (
 	db "gadm-api/db"
 	repo "gadm-api/db/repo"
 	dbutils "gadm-api/db/utils"
+
 	gadmUtils "gadm-api/utils"
+	utils "gadm-api/utils"
 )
 
 type FeatureCollectionHandlerQueryConfig struct {
@@ -35,23 +37,23 @@ var featureCollectionHandlerQueryConfig = map[gadmUtils.GadmLevel]FeatureCollect
 		QueryLimitConfig: QueryLimitConfig{minLimit: 1, maxLimit: 5},
 	},
 	gadmUtils.GadmLevel1: {
-		FilterableColumns: arrayToStrings(db.GidName0),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 5},
 	},
 	gadmUtils.GadmLevel2: {
-		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0, db.GidName1),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
 	},
 	gadmUtils.GadmLevel3: {
-		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0, db.GidName1, db.GidName2),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
 	},
 	gadmUtils.GadmLevel4: {
-		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 	},
 	gadmUtils.GadmLevel5: {
-		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 	},
 }
@@ -88,10 +90,10 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 	filterParams := getSqlGidLevelFilterParamsFromUrl(
 		handler.config.FilterableColumns,
 		handler.req.URL.Query())
-	pageSize := clamp(paginationParams.Limit,
+	pageSize := utils.Clamp(paginationParams.Limit,
 		handler.config.QueryLimitConfig.minLimit,
 		handler.config.QueryLimitConfig.maxLimit)
-	startAtFid := max(paginationParams.StartAtFid, MIN_FID)
+	startAtFid := utils.Max(paginationParams.StartAtFid, MIN_FID)
 
 	nextUrl, err := handler.getNextPageUrl(startAtFid, pageSize, filterParams)
 	if err != nil {

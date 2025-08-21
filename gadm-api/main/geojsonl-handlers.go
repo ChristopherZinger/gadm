@@ -10,6 +10,7 @@ import (
 	repo "gadm-api/db/repo"
 	dbutils "gadm-api/db/utils"
 	gadmUtils "gadm-api/utils"
+	utils "gadm-api/utils"
 
 	"gadm-api/logger"
 
@@ -46,23 +47,23 @@ var geojsonHandlerQueryConfig = map[gadmUtils.GadmLevel]GeojsonlHandlerQueryConf
 	},
 	gadmUtils.GadmLevel1: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
-		FilterableColumns: arrayToStrings(db.GidName0),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0),
 	},
 	gadmUtils.GadmLevel2: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
-		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0, db.GidName1),
 	},
 	gadmUtils.GadmLevel3: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
-		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0, db.GidName1, db.GidName2),
 	},
 	gadmUtils.GadmLevel4: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 100},
-		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
 	},
 	gadmUtils.GadmLevel5: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 100},
-		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
+		FilterableColumns: utils.ArrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
 	},
 }
 
@@ -99,10 +100,10 @@ func (handler *GadmGeojsonlHandler) handle() {
 	filterParams := getSqlGidLevelFilterParamsFromUrl(
 		handler.config.FilterableColumns,
 		handler.req.URL.Query())
-	pageSize := clamp(paginationParams.Limit,
+	pageSize := utils.Clamp(paginationParams.Limit,
 		handler.config.QueryLimitConfig.minLimit,
 		handler.config.QueryLimitConfig.maxLimit)
-	startAtFid := max(paginationParams.StartAtFid, MIN_FID)
+	startAtFid := utils.Max(paginationParams.StartAtFid, MIN_FID)
 
 	nextUrl, err := handler.getNextPageUrl(startAtFid, pageSize, filterParams)
 	if err != nil {
