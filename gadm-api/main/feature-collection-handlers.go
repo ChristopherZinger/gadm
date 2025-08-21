@@ -85,7 +85,7 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 		return
 	}
 
-	filterParams := getSqlFilterParamsFromUrl(
+	filterParams := getSqlGidLevelFilterParamsFromUrl(
 		handler.config.FilterableColumns,
 		handler.req.URL.Query())
 	pageSize := clamp(paginationParams.Limit,
@@ -100,8 +100,8 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 
 	featureCollectionJSON, err := handler.fcRepo.GetFeatureCollection(repo.GetFeatureCollectionParams{
 		GadmLevel:     handler.gadmLevel,
-		FilterValue:   filterParams.FilterVal,
-		FilterColName: filterParams.FilterColName,
+		FilterValue:   filterParams.GidValue,
+		FilterColName: filterParams.GidLevelName,
 		StartAtFid:    startAtFid,
 		PageSize:      pageSize,
 	})
@@ -118,14 +118,14 @@ func (handler *GadmFeatureCollectionHandler) handle() {
 func (handler *GadmFeatureCollectionHandler) getNextPageUrl(
 	startAtFid int,
 	pageSize int,
-	filterParams db.SqlFilterParams,
+	filterParams db.GidLevelFilterParams,
 ) (string, error) {
 	nextStartAtFid, err := handler.nextPageRepo.GetNextPageFid(
 		dbutils.NextPageParams{
 			StartAt:       startAtFid,
 			PageSize:      pageSize,
-			FilterColName: filterParams.FilterColName,
-			FilterVal:     filterParams.FilterVal,
+			FilterColName: filterParams.GidLevelName,
+			FilterVal:     filterParams.GidValue,
 		})
 
 	if err != nil {

@@ -96,7 +96,7 @@ func (handler *GadmGeojsonlHandler) handle() {
 		return
 	}
 
-	filterParams := getSqlFilterParamsFromUrl(
+	filterParams := getSqlGidLevelFilterParamsFromUrl(
 		handler.config.FilterableColumns,
 		handler.req.URL.Query())
 	pageSize := clamp(paginationParams.Limit,
@@ -113,10 +113,10 @@ func (handler *GadmGeojsonlHandler) handle() {
 
 	handler.setGeojsonlStreamingResponseHeaders(nextUrl)
 
-	err = handler.queryAdmGeoJsonl(db.SqlQueryParams{
-		LimitValue:      pageSize,
-		StartAtValue:    startAtFid,
-		SqlFilterParams: filterParams,
+	err = handler.queryAdmGeoJsonl(db.SqlAdmQueryParams{
+		PageSize:             pageSize,
+		StartAtFid:           startAtFid,
+		GidLevelFilterParams: filterParams,
 	})
 	if err != nil {
 		logger.Error("failed_to_stream_geojsonl %v", err)
@@ -131,13 +131,13 @@ func (handler *GadmGeojsonlHandler) handle() {
 func (handler *GadmGeojsonlHandler) getNextPageUrl(
 	startAtFid int,
 	pageSize int,
-	filterParams db.SqlFilterParams) (string, error) {
-
+	filterParams db.GidLevelFilterParams,
+) (string, error) {
 	nextStartAtFid, err := handler.nextPageRepo.GetNextPageFid(dbutils.NextPageParams{
 		StartAt:       startAtFid,
 		PageSize:      pageSize,
-		FilterColName: filterParams.FilterColName,
-		FilterVal:     filterParams.FilterVal,
+		FilterColName: filterParams.GidLevelName,
+		FilterVal:     filterParams.GidValue,
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed_to_get_next_start_at_fid %v", err)
@@ -150,13 +150,13 @@ func (handler *GadmGeojsonlHandler) getNextPageUrl(
 	return getGeojsonlUrl(handler.gadmLevel, nextUrlParams...), nil
 }
 
-func (handler *GadmGeojsonlHandler) queryAdmGeoJsonl(queryParams db.SqlQueryParams) error {
+func (handler *GadmGeojsonlHandler) queryAdmGeoJsonl(queryParams db.SqlAdmQueryParams) error {
 	rows, err := handler.geojsonlRepo.GetGeojsonl(repo.GetGeojsonlParams{
 		GadmLevel:     handler.gadmLevel,
-		FilterVal:     queryParams.FilterVal,
-		FilterColName: queryParams.FilterColName,
-		StartAtValue:  queryParams.StartAtValue,
-		LimitValue:    queryParams.LimitValue,
+		FilterVal:     queryParams.GidValue,
+		FilterColName: queryParams.GidLevelName,
+		StartAtValue:  queryParams.StartAtFid,
+		LimitValue:    queryParams.PageSize,
 	})
 	if err != nil {
 		logger.Error("failed_to_build_sql_query %v", err)

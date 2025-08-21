@@ -13,15 +13,15 @@ var GADM_QUERY_ORDER_COLUMN_NAME = "fid"
 
 var psql = squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
-type SqlFilterParams struct {
-	FilterColName string
-	FilterVal     string
+type GidLevelFilterParams struct {
+	GidLevelName string
+	GidValue     string
 }
 
-type SqlQueryParams struct {
-	StartAtValue int
-	LimitValue   int
-	SqlFilterParams
+type SqlAdmQueryParams struct {
+	StartAtFid int
+	PageSize   int
+	GidLevelFilterParams
 }
 
 func GetGadmBaseSelectBuilder(

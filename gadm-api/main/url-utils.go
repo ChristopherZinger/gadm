@@ -46,7 +46,8 @@ func getPaginationParams(r *http.Request) (PaginationParams, error) {
 func getNextPageUrlQueryParams(
 	nextStartAtFid int,
 	pageSize int,
-	filterParams db.SqlFilterParams) ([]QueryParam, error) {
+	filterParams db.GidLevelFilterParams,
+) ([]QueryParam, error) {
 
 	nextUrlQueryParams := []QueryParam{
 		{
@@ -57,16 +58,16 @@ func getNextPageUrlQueryParams(
 			Value: fmt.Sprintf("%d", nextStartAtFid),
 		},
 	}
-	nextFilterQueryParamColName, err := getFilterUrlQueryParameterForFilterableColumnName(filterParams.FilterColName)
+	nextFilterQueryParamColName, err := getFilterUrlQueryParameterForFilterableColumnName(filterParams.GidLevelName)
 	if err == nil {
 		nextUrlQueryParams = append(nextUrlQueryParams, QueryParam{
 			Key:   nextFilterQueryParamColName,
-			Value: filterParams.FilterVal,
+			Value: filterParams.GidValue,
 		})
 	} else {
 		return nil, fmt.Errorf(
 			"failed_to_get_filter_url_query_parameter_for_filterable_column_name, filter_col_name: %s, %v",
-			filterParams.FilterColName, err)
+			filterParams.GidLevelName, err)
 	}
 
 	return nextUrlQueryParams, nil
@@ -91,8 +92,10 @@ func getFilterUrlQueryParameterForFilterableColumnName(filterableColName string)
 	}
 }
 
-func getSqlFilterParamsFromUrl(filterableColNames []string, urlValues url.Values) db.SqlFilterParams {
-	var result db.SqlFilterParams
+func getSqlGidLevelFilterParamsFromUrl(
+	filterableColNames []string, urlValues url.Values,
+) db.GidLevelFilterParams {
+	var result db.GidLevelFilterParams
 	for _, filterColName := range filterableColNames {
 		filterUrlParamName, err := getFilterUrlQueryParameterForFilterableColumnName(filterColName)
 		if err != nil {
@@ -102,8 +105,8 @@ func getSqlFilterParamsFromUrl(filterableColNames []string, urlValues url.Values
 
 		paramStrVal := urlValues.Get(filterUrlParamName)
 		if paramStrVal != "" {
-			result.FilterColName = filterColName
-			result.FilterVal = paramStrVal
+			result.GidLevelName = filterColName
+			result.GidValue = paramStrVal
 			break
 		}
 	}
