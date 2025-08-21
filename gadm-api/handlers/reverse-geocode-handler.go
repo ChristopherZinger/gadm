@@ -1,7 +1,6 @@
-package main
+package handlers
 
 import (
-	"context"
 	"gadm-api/logger"
 	"io"
 	"net/http"
@@ -20,13 +19,12 @@ type ReverseGeocodeHandler struct {
 }
 
 func NewReverseGeocodeHandler(
-	ctx context.Context,
 	pgConn *db.PgConn,
 	req *http.Request,
 	writer http.ResponseWriter,
 ) *ReverseGeocodeHandler {
 
-	repo := rgRepo.NewReverseGeocodeRepo(pgConn, ctx)
+	repo := rgRepo.NewReverseGeocodeRepo(pgConn, req.Context())
 
 	return &ReverseGeocodeHandler{
 		req:    req,
@@ -40,7 +38,7 @@ type ReverseGeocodeResponse struct {
 	Id    string          `json:"id"`
 }
 
-func (handler *ReverseGeocodeHandler) handle() {
+func (handler *ReverseGeocodeHandler) Handle() {
 	if handler.req.Method != http.MethodPost {
 		logger.Error("invalid_method method=%s", handler.req.Method)
 		http.Error(handler.writer, "method_not_allowed", http.StatusMethodNotAllowed)

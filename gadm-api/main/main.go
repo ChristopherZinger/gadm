@@ -8,6 +8,7 @@ import (
 	"os"
 
 	db "gadm-api/db"
+	handlers "gadm-api/handlers"
 	"gadm-api/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -53,12 +54,8 @@ func main() {
 
 	reverseGeocodeUrl := fmt.Sprintf("%sreverse-geocode", getBaseApiUrl().Path)
 	mux.HandleFunc(reverseGeocodeUrl, func(w http.ResponseWriter, r *http.Request) {
-		NewReverseGeocodeHandler(
-			r.Context(),
-			pgConn,
-			r,
-			w,
-		).handle()
+		h := handlers.NewReverseGeocodeHandler(pgConn, r, w)
+		h.Handle()
 	})
 
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
