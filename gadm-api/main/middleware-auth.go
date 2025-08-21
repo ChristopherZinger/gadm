@@ -21,30 +21,32 @@ func GetAuthMiddleWare(pgConn *db.PgConn) func(http.Handler) http.Handler {
 				return
 			}
 
-			if err := accessTokenCache.TOKEN_CACHE.HandleHitForToken(
-				token,
-				func(token string) (time.Time, error) {
-					return getTokenCreatedAtFromDb(r.Context(), pgConn, token)
-				}); err != nil {
+			if token != "" {
+				if err := accessTokenCache.TOKEN_CACHE.HandleHitForToken(
+					token,
+					func(token string) (time.Time, error) {
+						return getTokenCreatedAtFromDb(r.Context(), pgConn, token)
+					}); err != nil {
 
-				logger.Error("token_validation_failed %v", err)
+					logger.Error("token_validation_failed %v", err)
 
-				switch err.Error() {
-				case accessTokenCache.TokenExpiredMsg:
-					http.Error(w, "token_expired", http.StatusUnauthorized)
-					return
-				case accessTokenCache.RateLimitExceededMsg:
-					http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
-					return
-				case FailedToQueryDatabaseMsg:
-					http.Error(w, "internal_server_error", http.StatusInternalServerError)
-					return
-				case NoResultsMsg:
-					http.Error(w, "invalid_access_token", http.StatusUnauthorized)
-					return
-				default:
-					http.Error(w, "internal_server_error", http.StatusInternalServerError)
-					return
+					switch err.Error() {
+					case accessTokenCache.TokenExpiredMsg:
+						http.Error(w, "token_expired", http.StatusUnauthorized)
+						return
+					case accessTokenCache.RateLimitExceededMsg:
+						http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
+						return
+					case FailedToQueryDatabaseMsg:
+						http.Error(w, "internal_server_error", http.StatusInternalServerError)
+						return
+					case NoResultsMsg:
+						http.Error(w, "invalid_access_token", http.StatusUnauthorized)
+						return
+					default:
+						http.Error(w, "internal_server_error", http.StatusInternalServerError)
+						return
+					}
 				}
 			}
 			next.ServeHTTP(w, r)

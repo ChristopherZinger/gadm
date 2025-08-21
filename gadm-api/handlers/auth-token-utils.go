@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gadm-api/logger"
 	"net/http"
+	"strings"
 )
 
 const NOT_RESULTS_FOR_QUERY_PG_MSG = "no rows in result set"
@@ -12,6 +13,11 @@ func GetAuthTokenFromRequest(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	logger.Debug("auth_header_received header=%s remote_addr=%s path=%s", authHeader, r.RemoteAddr, r.URL.Path)
 	var token string
+
+	if strings.Contains(r.URL.Path, "create-access-token") {
+		logger.Debug("create_access_token_request_bypassing_auth path=%s", r.URL.Path)
+		return "", nil
+	}
 
 	if authHeader != "" {
 		const bearerPrefix = "Bearer "
