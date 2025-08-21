@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	accessTokenCache "gadm-api/access-token-cache"
 	db "gadm-api/db"
 )
 
@@ -49,10 +48,10 @@ func (handler *AccessTokenCreationHandler) handle() {
 		return
 	}
 
-	token, err := GetAuthTokenFromRequest(handler.req)
-	if err != nil {
-		logger.Error("failed_to_get_auth_token %v", err)
-		http.Error(handler.writer, "unauthorized "+err.Error(), http.StatusUnauthorized)
+	if !tokenCreationRateLimiter.IsAllowed() {
+		logger.Warning("global_rate_limit_exceeded remote_addr=%s", handler.req.RemoteAddr)
+		errorMsg := fmt.Sprintf("rate_limit_exceeded")
+		http.Error(handler.writer, errorMsg, http.StatusTooManyRequests)
 		return
 	}
 
@@ -60,39 +59,6 @@ func (handler *AccessTokenCreationHandler) handle() {
 	if email == "" {
 		logger.Error("missing_email_parameter")
 		http.Error(handler.writer, "email_not_provided", http.StatusBadRequest)
-		return
-	}
-
-	sql, args, err := db.GetAccessTokenSqlQuery(token)
-	if err != nil {
-		logger.Error("failed_to_get_access_token_sql_query %v", err)
-		http.Error(handler.writer, "internal_server_error", http.StatusInternalServerError)
-		return
-	}
-
-	var createdAt time.Time
-	var canGenerateAccessTokens bool
-	err = handler.pgConn.Db.QueryRow(handler.ctx, sql, args...).Scan(&createdAt, &canGenerateAccessTokens)
-	if err != nil {
-		if err.Error() == NOT_RESULTS_FOR_QUERY_PG_MSG {
-			logger.Error("token_not_found token=%s", token)
-			http.Error(handler.writer, "invalid_access_token_", http.StatusUnauthorized)
-			return
-		}
-		logger.Error("failed_to_query_access_token %v", err)
-		http.Error(handler.writer, "internal_server_error", http.StatusInternalServerError)
-		return
-	}
-
-	if accessTokenCache.IsTokenExpired(createdAt) {
-		logger.Error("token_expired token=%s", token)
-		http.Error(handler.writer, "token_expired", http.StatusUnauthorized)
-		return
-	}
-
-	if !canGenerateAccessTokens {
-		logger.Error("insufficient_permissions token=%s", token)
-		http.Error(handler.writer, "insufficient_permissions", http.StatusForbidden)
 		return
 	}
 
