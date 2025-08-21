@@ -6,7 +6,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 
-	utils "gadm-api/utils"
+	gadmUtils "gadm-api/utils"
 )
 
 var GADM_QUERY_ORDER_COLUMN_NAME = "fid"
@@ -25,7 +25,7 @@ type SqlAdmQueryParams struct {
 }
 
 func GetGadmBaseSelectBuilder(
-	lv utils.GadmLevel,
+	lv gadmUtils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
@@ -51,7 +51,7 @@ func GetGadmBaseSelectBuilder(
 }
 
 func GetGadmFeatureSelectBuilder(
-	lv utils.GadmLevel,
+	lv gadmUtils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,
@@ -76,7 +76,7 @@ func GetGadmFeatureSelectBuilder(
 }
 
 type GadmFeatureCollectionSelectBuilderParams struct {
-	GadmLevel     utils.GadmLevel
+	GadmLevel     gadmUtils.GadmLevel
 	FilterValue   string
 	FilterColName string
 	StartAtFid    int
@@ -103,7 +103,7 @@ func BuildGadmFeatureCollectionSelectBuilder(
 }
 
 func BuildGeojsonFeatureSqlQuery(
-	lv utils.GadmLevel,
+	lv gadmUtils.GadmLevel,
 	gidFilterValue string,
 	filterColName string,
 	startAtFid int,

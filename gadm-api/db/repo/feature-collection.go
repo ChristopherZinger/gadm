@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gadm-api/db"
-	utils "gadm-api/utils"
+	gadmUtils "gadm-api/utils"
 )
 
 type FeatureCollectionRepo struct {
@@ -21,7 +21,7 @@ func NewFeatureCollectionRepo(
 }
 
 type GetFeatureCollectionParams struct {
-	GadmLevel     utils.GadmLevel
+	GadmLevel     gadmUtils.GadmLevel
 	FilterValue   string
 	FilterColName string
 	StartAtFid    int

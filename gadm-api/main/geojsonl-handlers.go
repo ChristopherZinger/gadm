@@ -9,7 +9,7 @@ import (
 	db "gadm-api/db"
 	repo "gadm-api/db/repo"
 	dbutils "gadm-api/db/utils"
-	utils "gadm-api/utils"
+	gadmUtils "gadm-api/utils"
 
 	"gadm-api/logger"
 
@@ -27,7 +27,7 @@ type GadmGeojsonlHandler struct {
 	req          *http.Request
 	writer       http.ResponseWriter
 	ctx          context.Context
-	gadmLevel    utils.GadmLevel
+	gadmLevel    gadmUtils.GadmLevel
 	config       GeojsonlHandlerQueryConfig
 	nextPageRepo *dbutils.NextPageRepo
 	geojsonlRepo *repo.GeojsonlRepo
@@ -38,29 +38,29 @@ type QueryLimitConfig struct {
 	maxLimit int
 }
 
-var supportedGadmLevelsForGeojsonl = []utils.GadmLevel{utils.GadmLevel0, utils.GadmLevel1, utils.GadmLevel2, utils.GadmLevel3, utils.GadmLevel4, utils.GadmLevel5}
+var supportedGadmLevelsForGeojsonl = []gadmUtils.GadmLevel{gadmUtils.GadmLevel0, gadmUtils.GadmLevel1, gadmUtils.GadmLevel2, gadmUtils.GadmLevel3, gadmUtils.GadmLevel4, gadmUtils.GadmLevel5}
 
-var geojsonHandlerQueryConfig = map[utils.GadmLevel]GeojsonlHandlerQueryConfig{
-	utils.GadmLevel0: {
+var geojsonHandlerQueryConfig = map[gadmUtils.GadmLevel]GeojsonlHandlerQueryConfig{
+	gadmUtils.GadmLevel0: {
 		QueryLimitConfig: QueryLimitConfig{minLimit: 1, maxLimit: 20},
 	},
-	utils.GadmLevel1: {
+	gadmUtils.GadmLevel1: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 20},
 		FilterableColumns: arrayToStrings(db.GidName0),
 	},
-	utils.GadmLevel2: {
+	gadmUtils.GadmLevel2: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1),
 	},
-	utils.GadmLevel3: {
+	gadmUtils.GadmLevel3: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 50},
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2),
 	},
-	utils.GadmLevel4: {
+	gadmUtils.GadmLevel4: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 100},
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3),
 	},
-	utils.GadmLevel5: {
+	gadmUtils.GadmLevel5: {
 		QueryLimitConfig:  QueryLimitConfig{minLimit: 1, maxLimit: 100},
 		FilterableColumns: arrayToStrings(db.GidName0, db.GidName1, db.GidName2, db.GidName3, db.GidName4),
 	},
@@ -205,7 +205,7 @@ func newGadmGeojsonlHandler(
 	pgConn *db.PgConn,
 	r *http.Request,
 	w http.ResponseWriter,
-	gadmLevel utils.GadmLevel,
+	gadmLevel gadmUtils.GadmLevel,
 ) *GadmGeojsonlHandler {
 
 	ctx := r.Context()

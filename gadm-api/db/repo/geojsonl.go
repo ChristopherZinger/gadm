@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"gadm-api/db"
 	"gadm-api/logger"
-	"gadm-api/utils"
+	gadmUtils "gadm-api/utils"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -20,7 +20,7 @@ func NewGeojsonlRepo(pgConn *db.PgConn, ctx context.Context) *GeojsonlRepo {
 }
 
 type GetGeojsonlParams struct {
-	GadmLevel     utils.GadmLevel
+	GadmLevel     gadmUtils.GadmLevel
 	FilterVal     string
 	FilterColName string
 	StartAtValue  int

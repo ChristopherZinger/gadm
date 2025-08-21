@@ -9,7 +9,7 @@ import (
 
 	db "gadm-api/db"
 	rgRepo "gadm-api/db/repo"
-	utils "gadm-api/utils"
+	gadmUtils "gadm-api/utils"
 )
 
 type ReverseGeocodeHandler struct {
@@ -34,8 +34,8 @@ func NewReverseGeocodeHandler(
 }
 
 type ReverseGeocodeResponse struct {
-	Level utils.GadmLevel `json:"level"`
-	Id    string          `json:"id"`
+	Level gadmUtils.GadmLevel `json:"level"`
+	Id    string              `json:"id"`
 }
 
 func (handler *ReverseGeocodeHandler) Handle() {
