@@ -1,0 +1,17 @@
+services:
+  gadm-db:
+    image: postgis/postgis:latest
+    platform: linux/amd64
+    container_name: ${DB_HOST}
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_DB: ${PG_DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - gadm_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  gadm_db_data:
