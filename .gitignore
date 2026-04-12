@@ -13,7 +13,8 @@ secrets
 
 bash
 
-# Hugo generated files
-# docs/  # Commented out for GitHub Pages deployment (Hugo output)
+# Hugo generated site (self-hosted via Docker; rebuild with `hugo` or compose build)
+docs/
+gadm-docs/public/
 gadm-docs/resources/
 gadm-docs/.hugo_build.lock
