@@ -9,11 +9,11 @@ title: "reverse geocode"
 
 ## Endpoint Info
 
-```
+{{< highlight text "linenos=false" >}}
 method:     POST
-path:       {{< param "pathReverseGeocode">}}
+path:       {{< param "pathReverseGeocode" >}}
 body:       GeoJSON Point Geometry
-```
+{{< /highlight >}}
 
 ## Notes
 
@@ -26,10 +26,9 @@ Request body must include valid
 
 ## Example
 
-```
+{{< highlight bash "linenos=false" >}}
 curl -X POST -H "Authorization: Bearer $TOKEN"\
     -H "Content-Type: application/json" \
     -d '{"type": "Point", "coordinates": [ -0.017369731082479873, 44.12916742279152]}' \
-    "{{< param "apiBaseUrl">}}{{<param "pathReverseGeocode">}}"
-
-```
+    "{{< param "apiBaseUrl" >}}{{< param "pathReverseGeocode" >}}"
+{{< /highlight >}}

@@ -1,8 +1,18 @@
-baseURL = 'https://christopherzinger.github.io/gadm/'
+baseURL = 'https://docs.worldlines.dev'
 languageCode = 'en-us'
 title = 'GADM API'
 theme = 'hugo-book'
-publishDir = '../docs'
+
+# Built site: ./public (Docker image + local `hugo`). Not committed.
+publishDir = 'public'
+
+# Allow <code>…</code> (and similar) in Markdown when using shortcodes in prose.
+[markup.goldmark.renderer]
+unsafe = true
+
+[markup.highlight]
+  style = "emacs"   
+  lineNos = false
 
 [params]
   apiBaseUrl = 'api.worldlines.org'

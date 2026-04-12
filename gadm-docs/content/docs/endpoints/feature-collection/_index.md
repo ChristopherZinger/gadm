@@ -9,11 +9,11 @@ title: "feature collection"
 
 ## Endpoint Info
 
-```
+{{< highlight text "linenos=false" >}}
 method:     GET
-path:       {{< param "pathFeatureCollection">}}<LEVEL>
+path:       {{< param "pathFeatureCollection" >}}<LEVEL>
 LEVEL:      'lv0' | 'lv1' | 'lv2' | 'lv3' | 'lv4' | 'lv5'
-```
+{{< /highlight >}}
 
 ## Notes
 
@@ -26,10 +26,10 @@ When making a request, you must specify the desired level directly in the URL pa
 
 ## Example
 
-```
+{{< highlight bash "linenos=false" >}}
 curl -H "Authorization: Bearer $TOKEN" \
     "{{< param "apiBaseUrl" >}}/api/v1/fc/lv1"
-```
+{{< /highlight >}}
 
 ## Pagination
 
@@ -40,13 +40,13 @@ with the URL for the next page:
 
 **Response Header:**
 
-```
-Link: {{< param "apiBaseUrl" >}}/api/v1/fc/lv1?{{< param "queryParamStartAt">}}=1234; rel="next"
-```
+{{< highlight http "linenos=false" >}}
+Link: {{< param "apiBaseUrl" >}}/api/v1/fc/lv1?{{< param "queryParamStartAt" >}}=1234; rel="next"
+{{< /highlight >}}
 
 **Example with curl:**
 
-```
+{{< highlight bash "linenos=false" >}}
 # First request
 curl -I -H "Authorization: Bearer $TOKEN" \
     {{< param "apiBaseUrl" >}}/api/v1/fc/lv1
@@ -56,14 +56,14 @@ curl -I -H "Authorization: Bearer $TOKEN" \
 
 # Use the Link header URL for the next page
 curl -H "Authorization: Bearer $TOKEN" \
-    "{{<param "apiBaseUrl">}}{{< param "pathFeatureCollection">}}lv1?{{< param "queryParamStartAt">}}=ABC123"
-```
+    "{{< param "apiBaseUrl" >}}{{< param "pathFeatureCollection" >}}lv1?{{< param "queryParamStartAt" >}}=ABC123"
+{{< /highlight >}}
 
 ## Query Parameters
 
 ### Page Size
 
-You can control page size with `{{<param "queryParamPageSize">}}` parameter
+You can control page size with <code>{{< param "queryParamPageSize" >}}</code> parameter
 
 There are relatively low limits on maximum number of features you can retrieve
 at once since the geometries can be rather heavy.
@@ -76,9 +76,9 @@ at once since the geometries can be rather heavy.
 
 **Example**
 
-```
-{{< param "pathFeatureCollection">}}<LEVEL>?{{< param "queryParamPageSize">}}=5
-```
+{{< highlight text "linenos=false" >}}
+{{< param "pathFeatureCollection" >}}<LEVEL>?{{< param "queryParamPageSize" >}}=5
+{{< /highlight >}}
 
 ### Page number
 
@@ -88,9 +88,9 @@ however it's better to leverage the cursor included in the `Link` header.
 
 **Example**
 
-```
-{{< param "pathFeatureCollection">}}<LEVEL>?{{< param "queryParamStartAt">}}=14039
-```
+{{< highlight text "linenos=false" >}}
+{{< param "pathFeatureCollection" >}}<LEVEL>?{{< param "queryParamStartAt" >}}=14039
+{{< /highlight >}}
 
 ### Filtering
 
@@ -99,15 +99,15 @@ by providing parent's `GID` value in a query parameter.
 
 **Usage**
 
-```
+{{< highlight text "linenos=false" >}}
 // PARENT_GID_PARAM: 'gid-0' | 'gid-1' | 'gid-2' | 'gid-3' | 'gid-4' | 'gid-5'
 // CHILD_LEVEL: 'lv0' |'lv1' |'lv2' |'lv3' |'lv4' |'lv5'
-{{< param "pathFeatureCollection">}}<CHILD_LEVEL>?<PARENT_GID_PARAM>=FRA
-```
+{{< param "pathFeatureCollection" >}}<CHILD_LEVEL>?<PARENT_GID_PARAM>=FRA
+{{< /highlight >}}
 
 **Example**
 
-```
+{{< highlight text "linenos=false" >}}
 // get all administrative units at level 3 for France
-{{< param "pathFeatureCollection">}}lv3?{{< param "queryParamGid">}}0=FRA
-```
+{{< param "pathFeatureCollection" >}}lv3?{{< param "queryParamGid" >}}0=FRA
+{{< /highlight >}}
