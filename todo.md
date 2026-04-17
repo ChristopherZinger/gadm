@@ -1,14 +1,17 @@
 # TODO
 
-## MVP 1
+# Kickoff 2
+- finish access token docs
+- home server - handle closed lid and screen LED highlight
+- tiles with pg -> [link](https://medium.com/@lawsontaylor/diy-vector-tile-server-with-postgis-and-fastapi-b8514c95267c)
 
-[x] - feature collection endpoints
-[x] - geojsonl endpoints
-[] - security
-[x] - data in production
-[x] - rate limiting
-[x] - access tokens
-[] - docs - svelte app or swagger
+```
+Even inside ecosystems like Mapbox, similar patterns apply:
+    PostGIS → dynamic tiles
+    Tegola / TileServer GL / t_rex → tile servers
+    Tippecanoe → generate tilesets
+    MBTiles / PMTiles → storage
+```
 
 ## MVP 2
 

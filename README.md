@@ -14,3 +14,11 @@ The `init_database.sh` script will reset old database and create new one.
 It will setup appropriate roles and ingest GADM geopackage. It requires
 GDAL and ogr2ogr to be per installed. The script has to be run from /gadm-app
 directory.
+
+## Ideas
+1. Add self hosted post hog or other analytics tool - maybe Prometeus + 
+    Otel + clickhouse ? [link](https://hub.docker.com/r/posthog/posthog)
+
+2. Add vector tiles server - either implement one or use tegola or 
+    [margin](martin.maplibre.org)
+
