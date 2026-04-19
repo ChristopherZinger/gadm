@@ -42,7 +42,10 @@
 				...baseInfo,
 				id: getOutlineLayerIdForAdmLv(level),
 				type: 'line',
-				paint: { 'line-color': 'black' },
+				paint: {
+					'line-color': 'black',
+					'line-width': [1.5, 1, 0.7, 0.4, 0.2, 0.1][level] ?? 1
+				},
 				minzoom: admLvToVisibilityZoomLv[level] || 0
 			},
 			{
