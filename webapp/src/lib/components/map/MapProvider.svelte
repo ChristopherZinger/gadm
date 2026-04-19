@@ -47,56 +47,13 @@
 				id: 'background',
 				type: 'background',
 				paint: {
-					'background-color': 'white'
+					'background-color': 'black'
 				},
 				filter: ['all'],
 				layout: {
 					visibility: 'visible'
 				},
 				maxzoom: 24
-			},
-			{
-				id: 'geolines',
-				type: 'line',
-				paint: {
-					'line-color': '#1077B0',
-					'line-opacity': 1,
-					'line-dasharray': [3, 3]
-				},
-				filter: ['all', ['!=', 'name', 'International Date Line']],
-				layout: {
-					visibility: 'visible'
-				},
-				source: 'maplibre',
-				maxzoom: 24,
-				'source-layer': 'geolines'
-			},
-			{
-				id: 'geolines-label',
-				type: 'symbol',
-				paint: {
-					'text-color': '#1077B0',
-					'text-halo-blur': 1,
-					'text-halo-color': 'rgba(255, 255, 255, 1)',
-					'text-halo-width': 1
-				},
-				filter: ['all', ['!=', 'name', 'International Date Line']],
-				layout: {
-					'text-font': ['Open Sans Semibold'],
-					'text-size': {
-						stops: [
-							[2, 12],
-							[6, 16]
-						]
-					},
-					'text-field': '{name}',
-					visibility: 'visible',
-					'symbol-placement': 'line'
-				},
-				source: 'maplibre',
-				maxzoom: 24,
-				minzoom: 1,
-				'source-layer': 'geolines'
 			}
 		],
 		bearing: 0,
