@@ -11,8 +11,12 @@
 	import { LAYERS_IDS_IN_ORDER } from '$lib/utills/map-layers-order';
 	import _ from 'lodash';
 	import { mapSelection } from '$lib/stores/map-selection';
+	import GadmLayerHighlight from './GadmLayerHighlight.svelte';
+	import { colors } from '$lib/utills/colors';
 
 	let { map }: { map: maplibregl.Map } = $props();
+
+	let areLayersLoaded = $state(false);
 
 	type LayerInfo = LayerSpecification & {
 		url: string;
@@ -33,9 +37,9 @@
 
 	const layerInfos: LayerInfo[] = ADM_LAYER_LEVELS.map((level) => {
 		const baseInfo = {
-			source: `ADM_${level}`,
-			'source-layer': `ADM_${level}`,
-			url: `${PM_TILES_URL}/ADM_${level}.pmtiles`
+			source: `adm_${level}`,
+			'source-layer': `adm_${level}`,
+			url: `${PM_TILES_URL}/adm_${level}.pmtiles`
 		};
 		return [
 			{
@@ -43,7 +47,7 @@
 				id: getOutlineLayerIdForAdmLv(level),
 				type: 'line',
 				paint: {
-					'line-color': 'black',
+					'line-color': colors.blackAsh,
 					'line-width': [1.5, 1, 0.7, 0.4, 0.2, 0.1][level] ?? 1
 				},
 				minzoom: admLvToVisibilityZoomLv[level] || 0
@@ -75,6 +79,8 @@
 		layersToAdd.forEach((info) => {
 			addLayer(map, info);
 		});
+
+		areLayersLoaded = true;
 	}
 
 	function removeAdmLayers(layerInfos: LayerInfo[]) {
@@ -82,56 +88,19 @@
 			removeLayer(map, info.id);
 			removeSource(map, info.source);
 		});
+
+		areLayersLoaded = false;
 	}
 
 	function handleClick(feature: maplibregl.MapGeoJSONFeature) {
-		const lv = feature.layer.id.split('-')[1];
-
-		switch (lv) {
-			case '0':
-				mapSelection.set({
-					type: 'adm-0',
-					gid0: feature.properties.gid_0,
-					properties: feature.properties
-				});
-				break;
-			case '1':
-				mapSelection.set({
-					type: 'adm-1',
-					gid1: feature.properties.gid_1,
-					properties: feature.properties
-				});
-				break;
-			case '2':
-				mapSelection.set({
-					type: 'adm-2',
-					gid2: feature.properties.gid_2,
-					properties: feature.properties
-				});
-				break;
-			case '3':
-				mapSelection.set({
-					type: 'adm-3',
-					gid3: feature.properties.gid_3,
-					properties: feature.properties
-				});
-				break;
-			case '4':
-				mapSelection.set({
-					type: 'adm-4',
-					gid4: feature.properties.gid_4,
-					properties: feature.properties
-				});
-				break;
-			case '5':
-				mapSelection.set({
-					type: 'adm-5',
-					gid5: feature.properties.gid_5,
-					properties: feature.properties
-				});
-				break;
-			default:
-				mapSelection.set(null);
+		const lv = Number(feature.layer.id.split('-')[1]);
+		if (_.isNumber(lv)) {
+			mapSelection.set({
+				type: 'adm',
+				lv,
+				featureId: feature.id,
+				properties: feature.properties
+			});
 		}
 	}
 
@@ -144,7 +113,6 @@
 			});
 			const f = _.sortBy(features, (f) => f.layer.id.split('-')[1]).reverse()[0];
 			if (f) {
-				console.log(f);
 				handleClick(f);
 			}
 		});
@@ -154,3 +122,7 @@
 		removeAdmLayers(layerInfos);
 	});
 </script>
+
+{#if areLayersLoaded}
+	<GadmLayerHighlight {map} />
+{/if}

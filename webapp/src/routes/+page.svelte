@@ -5,13 +5,15 @@
 
 <div style="height: 100vh; width: 100vw; display: flex; flex-direction: row;">
 	<div style="flex: 1; padding: 10px;">
-		<div style="height: 100%; width: 100%; border-radius: 10px; overflow: hidden;">
+		<div
+			style="height: 100%; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid black;"
+		>
 			<Map />
 		</div>
 	</div>
 	<div class="side-panel">
 		{#if $mapSelection}
-			<h1 class="text-2xl font-bold">{$mapSelection.properties.COUNTRY}</h1>
+			<h1 class="text-2xl font-bold">{$mapSelection.properties.country}</h1>
 			<table class="mt-4">
 				<thead>
 					<tr class="border-b border-gray-200">
@@ -25,7 +27,7 @@
 							<td class="p-2">{value}</td>
 						</tr>
 					{/each}
-				</tbody><tbody> </tbody>
+				</tbody>
 			</table>
 		{/if}
 	</div>

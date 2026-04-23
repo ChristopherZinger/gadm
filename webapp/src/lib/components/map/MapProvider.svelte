@@ -4,6 +4,7 @@
 	import * as maplibregl from 'maplibre-gl';
 	import type { Map } from 'maplibre-gl';
 	import { Protocol } from 'pmtiles';
+	import { colors } from '$lib/utills/colors';
 
 	let {
 		children
@@ -47,7 +48,7 @@
 				id: 'background',
 				type: 'background',
 				paint: {
-					'background-color': 'black'
+					'background-color': colors.blackAsh
 				},
 				filter: ['all'],
 				layout: {
