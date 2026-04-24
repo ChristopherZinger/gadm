@@ -27,5 +27,5 @@ func withCORS(h http.Handler) http.Handler {
 func main() {
 	fs := http.FileServer(http.Dir("public"))
 	http.Handle("/", withCORS(fs))
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8090", nil) // TODO: sync port with docker - setup env var
 }

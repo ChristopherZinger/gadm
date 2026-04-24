@@ -55,5 +55,31 @@ services:
       - "${DOCS_PORT:-8088}:80"
     restart: unless-stopped
 
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+      args:
+        NODE_VERSION: ${NODE_VERSION:-22}
+    image: webapp:local
+    platform: linux/amd64
+    container_name: gadm-webapp
+    ports:
+      - "${WEBAPP_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  file-server:
+    build:
+      context: ./file-server
+      dockerfile: Dockerfile
+      args:
+        NODE_VERSION: ${NODE_VERSION:-22}
+    image: file-server:local
+    platform: linux/amd64
+    container_name: gadm-file-server
+    ports:
+      - "${FILE_SERVER_PORT:-8090}:8090"
+    restart: unless-stopped
+
 volumes:
   gadm_db_data:
