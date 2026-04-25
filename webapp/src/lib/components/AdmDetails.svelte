@@ -21,7 +21,17 @@
 		<tbody>
 			{#each Object.entries(info.properties) as [key, value] (key)}
 				<tr class="border-b border-gray-200">
-					<td class="pr-2">{key.toLowerCase().replaceAll('_', ' ')}</td>
+					<td class="pr-2"
+						>{key
+							.toLowerCase()
+							.replaceAll('_', ' ')
+							.split(' ')
+							.filter((w) => {
+								const n = Number(w);
+								return !(typeof n === 'number' && !isNaN(n));
+							})
+							.join(' ')}</td
+					>
 					<td class="p-2">{value}</td>
 				</tr>
 			{/each}
