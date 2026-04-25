@@ -2,6 +2,9 @@ ARG NODE_VERSION=22
 
 FROM node:${NODE_VERSION}-alpine AS builder
 
+ARG PUBLIC_MAP_TILES_URL
+ENV PUBLIC_MAP_TILES_URL=$PUBLIC_MAP_TILES_URL
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./

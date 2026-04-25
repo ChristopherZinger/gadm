@@ -61,6 +61,7 @@ services:
       dockerfile: Dockerfile
       args:
         NODE_VERSION: ${NODE_VERSION:-22}
+        PUBLIC_MAP_TILES_URL: ${PUBLIC_MAP_TILES_URL}
     image: webapp:local
     platform: linux/amd64
     container_name: gadm-webapp

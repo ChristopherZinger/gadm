@@ -13,6 +13,7 @@
 	import { mapSelection } from '$lib/stores/map-selection';
 	import GadmLayerHighlight from './GadmLayerHighlight.svelte';
 	import { colors } from '$lib/utills/colors';
+	import { PUBLIC_MAP_TILES_URL } from '$env/static/public';
 
 	let { map }: { map: maplibregl.Map } = $props();
 
@@ -23,8 +24,6 @@
 		source: string;
 		id: string;
 	};
-
-	const PM_TILES_URL = 'http://localhost:8080/pmtiles';
 
 	const admLvToVisibilityZoomLv: Record<number, number> = {
 		0: 0,
@@ -39,7 +38,7 @@
 		const baseInfo = {
 			source: `adm_${level}`,
 			'source-layer': `adm_${level}`,
-			url: `${PM_TILES_URL}/adm_${level}.pmtiles`
+			url: `${PUBLIC_MAP_TILES_URL}/adm_${level}.pmtiles`
 		};
 		return [
 			{
