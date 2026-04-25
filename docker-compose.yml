@@ -79,6 +79,8 @@ services:
     container_name: gadm-file-server
     ports:
       - "${FILE_SERVER_PORT:-8090}:8090"
+    volumes:
+      - ./file-server/public:/app/public
     restart: unless-stopped
 
 volumes:
