@@ -7,7 +7,8 @@ COPY . .
 ARG HUGO_BASEURL=https://docs.worldlines.dev/
 ENV HUGO_ENV=production
 
-RUN hugo --minify --gc --baseURL "${HUGO_BASEURL}"
+# Fail the image build if Hugo outputs nothing — otherwise COPY leaves nginx’s default “Welcome” page.
+RUN hugo --minify --gc --baseURL "${HUGO_BASEURL}" && test -s public/index.html
 
 FROM nginx:1.27-alpine
 
