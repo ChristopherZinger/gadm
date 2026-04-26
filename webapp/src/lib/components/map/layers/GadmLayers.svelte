@@ -123,5 +123,15 @@
 </script>
 
 {#if areLayersLoaded}
-	<GadmLayerHighlight {map} />
+	<GadmLayerHighlight
+		{map}
+		_selection={$mapSelection &&
+		$mapSelection.type === 'adm' &&
+		_.isNumber(Number($mapSelection.featureId))
+			? {
+					level: $mapSelection.lv,
+					featureId: Number($mapSelection.featureId)
+				}
+			: null}
+	/>
 {/if}
