@@ -1,5 +1,6 @@
 <script lang="ts">
 	import GadmLayers from './layers/GadmLayers.svelte';
+	import UserGeometryLayer from './layers/UserGeometryLayer.svelte';
 	import MapProvider from './MapProvider.svelte';
 </script>
 
@@ -7,6 +8,7 @@
 	<MapProvider>
 		{#snippet children({ map })}
 			<GadmLayers {map} />
+			<UserGeometryLayer {map} />
 		{/snippet}
 	</MapProvider>
 </div>
