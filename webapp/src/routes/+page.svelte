@@ -1,36 +1,12 @@
 <script lang="ts">
 	import AdmDetails from '$lib/components/AdmDetails.svelte';
+	import CodeEditorInput from '$lib/components/CodeEditorInput.svelte';
 	import Map from '$lib/components/map/Map.svelte';
 	import type { SidePanelView } from '$lib/components/nav/Nav.svelte';
 	import Nav from '$lib/components/nav/Nav.svelte';
 	import { mapSelection } from '$lib/stores/map-selection';
-	import { userProvidedGeometry } from '$lib/stores/user-provided-geometry';
-	import { geojsonType } from '@turf/turf';
 
 	let sidePanelView = $state<SidePanelView>('geojson');
-	let geojsonInput = $state<string>(
-		`{
-  "type": "FeatureCollection",
-  "features": []
-}`
-	);
-
-	$effect(() => {
-		try {
-			const featureCollection = JSON.parse(geojsonInput);
-			if (!('features' in featureCollection && Array.isArray(featureCollection.features))) {
-				throw new Error('Invalid GeoJSON input');
-			}
-
-			featureCollection.features.forEach((feature: GeoJSON.Feature) => {
-				geojsonType(feature, 'Feature', 'geojson');
-			});
-
-			userProvidedGeometry.set(featureCollection.features);
-		} catch (error) {
-			console.error(error);
-		}
-	});
 </script>
 
 <div class="flex h-screen w-screen flex-row gap-3 p-3">
@@ -60,11 +36,8 @@
 			</div>
 		{:else if sidePanelView === 'geojson'}
 			<h1 class="text-2xl font-bold">GeoJSON Visualizer</h1>
-			<div class="flex min-h-0 flex-1 flex-col">
-				<textarea
-					bind:value={geojsonInput}
-					class="min-h-0 w-full flex-1 resize-y rounded-md border border-gray-300 p-2"
-				></textarea>
+			<div class="flex min-h-0 flex-1 flex-col overflow-x-auto">
+				<CodeEditorInput />
 			</div>
 		{:else}
 			Oops! No view selected
