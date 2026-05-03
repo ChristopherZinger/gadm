@@ -11,7 +11,7 @@
 
 <div class="flex h-screen w-screen flex-row gap-3 p-3">
 	<div style="flex-grow: 1; flex-shrink: 1;">
-		<div class="h-full w-full overflow-hidden rounded-md border border-gray-300">
+		<div class="map h-full w-full overflow-hidden rounded-md">
 			<Map />
 		</div>
 	</div>
@@ -54,5 +54,9 @@
 		flex-direction: column;
 		gap: 10px;
 		justify-content: space-between;
+	}
+
+	.map {
+		box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
 	}
 </style>

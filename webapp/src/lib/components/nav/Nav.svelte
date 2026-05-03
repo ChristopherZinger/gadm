@@ -3,6 +3,9 @@
 </script>
 
 <script lang="ts">
+	import GlobSouthAmericaIcon from '$lib/icons/GlobSouthAmericaIcon.svelte';
+	import JsonIcon from '$lib/icons/JsonIcon.svelte';
+
 	import { colors } from '$lib/utills/colors';
 
 	type SidePanelView = 'adm' | 'geojson';
@@ -13,7 +16,7 @@
 	}: { sidePanelView: SidePanelView; onSelectView: (view: SidePanelView) => void } = $props();
 </script>
 
-<nav style:background-color={colors.blackAsh}>
+<nav style:background-color={colors.offWhite}>
 	<ul>
 		<li
 			onclick={() => onSelectView('adm')}
@@ -21,7 +24,7 @@
 			class="nav-btn"
 			class:active={sidePanelView === 'adm'}
 		>
-			adm
+			<GlobSouthAmericaIcon />
 		</li>
 		<li
 			onclick={() => onSelectView('geojson')}
@@ -29,7 +32,7 @@
 			class="nav-btn"
 			class:active={sidePanelView === 'geojson'}
 		>
-			geo
+			<JsonIcon />
 		</li>
 	</ul>
 </nav>
@@ -40,8 +43,8 @@
 		flex-direction: column;
 		width: 50px;
 		min-width: 50px;
-		border: 1px solid black;
 		border-radius: 10px;
+		box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
 	}
 
 	nav ul {
@@ -65,6 +68,6 @@
 	}
 	.nav-btn:hover,
 	.nav-btn.active {
-		background-color: #444;
+		background-color: #ffcb77;
 	}
 </style>

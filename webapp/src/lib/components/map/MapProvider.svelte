@@ -48,7 +48,7 @@
 				id: 'background',
 				type: 'background',
 				paint: {
-					'background-color': colors.blackAsh
+					'background-color': colors.offWhite
 				},
 				filter: ['all'],
 				layout: {

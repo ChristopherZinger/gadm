@@ -52,7 +52,7 @@
 					'source-layer': `adm_${lv}`,
 					type: 'fill',
 					paint: {
-						'fill-color': colors.oceanBlue
+						'fill-color': colors.col4
 					},
 					filter: ['literal', false]
 				},
