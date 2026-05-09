@@ -1,5 +1,9 @@
 <script lang="ts">
 	import { userProvidedGeometry } from '$lib/stores/user-provided-geometry';
+	import {
+		USER_GEOMETRY_FILL_LAYER_ID,
+		USER_GEOMETRY_OUTLINE_LAYER_ID
+	} from '$lib/utills/map-layers-order';
 	import type * as maplibregl from 'maplibre-gl';
 	import { onMount } from 'svelte';
 
@@ -9,9 +13,11 @@
 		return f.type === 'geojson';
 	};
 
+	const SourceId = 'user-geometry';
+
 	$effect(() => {
 		const features = $userProvidedGeometry;
-		const src = map.getSource('user-geometry');
+		const src = map.getSource(SourceId);
 		if (!src || !isGeojsonSource(src)) {
 			return;
 		}
@@ -22,7 +28,7 @@
 	});
 
 	onMount(() => {
-		map.addSource('user-geometry', {
+		map.addSource(SourceId, {
 			type: 'geojson',
 			data: {
 				type: 'FeatureCollection',
@@ -31,9 +37,9 @@
 		});
 
 		map.addLayer({
-			id: 'user-geometry-fill',
+			id: USER_GEOMETRY_FILL_LAYER_ID,
 			type: 'fill',
-			source: 'user-geometry',
+			source: SourceId,
 			paint: {
 				'fill-color': 'red',
 				'fill-opacity': 0.5
@@ -41,9 +47,9 @@
 		});
 
 		map.addLayer({
-			id: 'user-geometry',
+			id: USER_GEOMETRY_OUTLINE_LAYER_ID,
 			type: 'line',
-			source: 'user-geometry',
+			source: SourceId,
 			paint: {
 				'line-color': 'red',
 				'line-width': 2
@@ -51,9 +57,9 @@
 		});
 
 		return () => {
-			map.removeSource('user-geometry');
-			map.removeLayer('user-geometry-fill');
-			map.removeLayer('user-geometry');
+			map.removeSource(SourceId);
+			map.removeLayer(USER_GEOMETRY_FILL_LAYER_ID);
+			map.removeLayer(USER_GEOMETRY_OUTLINE_LAYER_ID);
 		};
 	});
 </script>
