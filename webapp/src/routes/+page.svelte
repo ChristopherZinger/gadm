@@ -6,7 +6,7 @@
 	import Nav from '$lib/components/nav/Nav.svelte';
 	import { mapSelection } from '$lib/stores/map-selection';
 
-	let sidePanelView = $state<SidePanelView>('geojson');
+	let sidePanelView = $state<SidePanelView>('adm');
 </script>
 
 <div class="flex h-screen w-screen flex-row gap-3 p-3">
