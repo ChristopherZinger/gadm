@@ -10,10 +10,11 @@
 	} from '$lib/utills/adm-map-layers';
 	import { LAYERS_IDS_IN_ORDER } from '$lib/utills/map-layers-order';
 	import _ from 'lodash';
-	import { mapSelection } from '$lib/stores/map-selection';
+	import { hoveredFeature, mapSelection } from '$lib/stores/map-selection';
 	import GadmLayerHighlight from './GadmLayerHighlight.svelte';
 	import { colors } from '$lib/utills/colors';
 	import { PUBLIC_MAP_TILES_URL } from '$env/static/public';
+	import GadmLayerHover from './GadmLayerHover.svelte';
 
 	let { map }: { map: maplibregl.Map } = $props();
 
@@ -134,4 +135,11 @@
 				}
 			: null}
 	/>
+	{#each ADM_LAYER_LEVELS as lv (lv)}
+		{@const featureId =
+			$hoveredFeature?.layerId === getFillLayerIdForAdmLv(lv)
+				? ($hoveredFeature.featureId ?? null)
+				: null}
+		<GadmLayerHover {map} {lv} {featureId} />
+	{/each}
 {/if}

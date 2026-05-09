@@ -9,3 +9,10 @@ type SelectableAdmId = {
 export type SelectableItem = SelectableAdmId & { properties: Record<string, unknown> };
 
 export const mapSelection = writable<SelectableItem | null>(null);
+
+type HoverFeature = {
+	featureId: string | undefined | number;
+	layerId: string;
+};
+
+export const hoveredFeature = writable<HoverFeature | null>(null);
