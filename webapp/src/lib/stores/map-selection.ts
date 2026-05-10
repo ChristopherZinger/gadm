@@ -1,18 +1,15 @@
 import { writable } from 'svelte/store';
 
-type SelectableAdmId = {
-	type: 'adm';
+export const selectedAdmInfo = writable<Record<string, unknown> | null>(null);
+
+type SelectedFeature = {
 	featureId: string | undefined | number;
-	lv: number;
+	layerId: string;
 };
-
-export type SelectableItem = SelectableAdmId & { properties: Record<string, unknown> };
-
-export const mapSelection = writable<SelectableItem | null>(null);
+export const selectedFeature = writable<SelectedFeature | null>(null);
 
 type HoverFeature = {
 	featureId: string | undefined | number;
 	layerId: string;
 };
-
 export const hoveredFeature = writable<HoverFeature | null>(null);

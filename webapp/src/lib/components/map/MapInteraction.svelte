@@ -3,9 +3,19 @@
 	import { USER_GEOMETRY_FILL_LAYER_ID } from '$lib/utills/map-layers-order';
 	import type * as maplibregl from 'maplibre-gl';
 	import { onDestroy, onMount } from 'svelte';
-	import { hoveredFeature } from '$lib/stores/map-selection';
+	import { hoveredFeature, selectedAdmInfo, selectedFeature } from '$lib/stores/map-selection';
 
 	let { map }: { map: maplibregl.Map } = $props();
+
+	const onMouseClick = (e: maplibregl.MapMouseEvent) => {
+		const mapFeatures = map.queryRenderedFeatures(e.point, {
+			layers: getEligibleInteractiveLayersInOrder()
+		});
+		const feature = findMostRelevantFeature(mapFeatures);
+		selectedFeature.set(feature ? { featureId: feature.id, layerId: feature.layer.id } : null);
+		// deprecate this and retrieve from api
+		selectedAdmInfo.set(feature ? feature.properties : null);
+	};
 
 	const onMouseMove = (e: maplibregl.MapMouseEvent) => {
 		const mapFeatures = map.queryRenderedFeatures(e.point, {
@@ -42,9 +52,11 @@
 
 	onMount(() => {
 		map.on('mousemove', onMouseMove);
+		map.on('click', onMouseClick);
 	});
 
 	onDestroy(() => {
 		map.off('mousemove', onMouseMove);
+		map.off('click', onMouseClick);
 	});
 </script>

@@ -9,8 +9,7 @@
 		getOutlineLayerIdForAdmLv
 	} from '$lib/utills/adm-map-layers';
 	import { LAYERS_IDS_IN_ORDER } from '$lib/utills/map-layers-order';
-	import _ from 'lodash';
-	import { hoveredFeature, mapSelection } from '$lib/stores/map-selection';
+	import { hoveredFeature, selectedFeature } from '$lib/stores/map-selection';
 	import GadmLayerHighlight from './GadmLayerHighlight.svelte';
 	import { colors } from '$lib/utills/colors';
 	import { PUBLIC_MAP_TILES_URL } from '$env/static/public';
@@ -92,30 +91,8 @@
 		areLayersLoaded = false;
 	}
 
-	function handleClick(feature: maplibregl.MapGeoJSONFeature) {
-		const lv = Number(feature.layer.id.split('-')[1]);
-		if (_.isNumber(lv)) {
-			mapSelection.set({
-				type: 'adm',
-				lv,
-				featureId: feature.id,
-				properties: feature.properties
-			});
-		}
-	}
-
 	onMount(() => {
 		createAdmLayers(layerInfos);
-
-		map.on('click', (e) => {
-			const features = map.queryRenderedFeatures(e.point, {
-				layers: ADM_LAYER_LEVELS.map(getFillLayerIdForAdmLv)
-			});
-			const f = _.sortBy(features, (f) => f.layer.id.split('-')[1]).reverse()[0];
-			if (f) {
-				handleClick(f);
-			}
-		});
 	});
 
 	onDestroy(() => {
@@ -124,22 +101,16 @@
 </script>
 
 {#if areLayersLoaded}
-	<GadmLayerHighlight
-		{map}
-		_selection={$mapSelection &&
-		$mapSelection.type === 'adm' &&
-		_.isNumber(Number($mapSelection.featureId))
-			? {
-					level: $mapSelection.lv,
-					featureId: Number($mapSelection.featureId)
-				}
-			: null}
-	/>
 	{#each ADM_LAYER_LEVELS as lv (lv)}
-		{@const featureId =
+		{@const hoverFeatureId =
 			$hoveredFeature?.layerId === getFillLayerIdForAdmLv(lv)
 				? ($hoveredFeature.featureId ?? null)
 				: null}
-		<GadmLayerHover {map} {lv} {featureId} />
+		{@const selectedFeatureId =
+			$selectedFeature?.layerId === getFillLayerIdForAdmLv(lv)
+				? ($selectedFeature.featureId ?? null)
+				: null}
+		<GadmLayerHighlight {map} {lv} featureId={selectedFeatureId} />
+		<GadmLayerHover {map} {lv} featureId={hoverFeatureId} />
 	{/each}
 {/if}

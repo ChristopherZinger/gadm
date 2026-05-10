@@ -4,7 +4,7 @@
 	import Map from '$lib/components/map/Map.svelte';
 	import type { SidePanelView } from '$lib/components/nav/Nav.svelte';
 	import Nav from '$lib/components/nav/Nav.svelte';
-	import { mapSelection } from '$lib/stores/map-selection';
+	import { selectedAdmInfo } from '$lib/stores/map-selection';
 
 	let sidePanelView = $state<SidePanelView>('adm');
 </script>
@@ -25,9 +25,9 @@
 						map to pick a unit and see its details here in the side panel.
 					</p>
 				</div>
-				{#if $mapSelection && $mapSelection.type === 'adm'}
+				{#if $selectedAdmInfo}
 					<div class="py-4">
-						<AdmDetails info={$mapSelection} />
+						<AdmDetails info={$selectedAdmInfo} />
 					</div>
 				{/if}
 			</div>
