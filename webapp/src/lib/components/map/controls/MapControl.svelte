@@ -1,7 +1,7 @@
 <script lang="ts">
 	import MapControlContainer from './MapControlContainer.svelte';
 	import type { Snippet } from 'svelte';
-	import { mount, onDestroy, onMount, unmount } from 'svelte';
+	import { mount, onMount, unmount } from 'svelte';
 
 	type Props = {
 		position: maplibregl.ControlPosition;
@@ -29,11 +29,11 @@
 	}
 
 	onMount(() => {
-		map.addControl(new Control(), position);
-	});
-
-	onDestroy(() => {
-		map.removeControl(new Control());
+		const control = new Control();
+		map.addControl(control, position);
+		return () => {
+			map.removeControl(control);
+		};
 	});
 </script>
 
