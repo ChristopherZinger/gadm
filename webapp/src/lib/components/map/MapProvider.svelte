@@ -5,7 +5,6 @@
 	import type { Map } from 'maplibre-gl';
 	import { Protocol } from 'pmtiles';
 	import { colors } from '$lib/utills/colors';
-	import MapInteraction from './MapInteraction.svelte';
 
 	let {
 		children
@@ -81,6 +80,5 @@
 		<div>Error loading map</div>
 	{:else}
 		{@render children({ map })}
-		<MapInteraction {map} />
 	{/if}
 </div>
