@@ -6,6 +6,7 @@
 	import { featureCollection } from '@turf/turf';
 	import { userProvidedGeometry } from '$lib/stores/user-provided-geometry';
 	import { geojsonType } from '@turf/turf';
+	import type { PrismEditor } from 'prism-code-editor';
 
 	const onUpdate = _.debounce((geojsonInput: string) => {
 		try {
@@ -24,12 +25,23 @@
 		}
 	}, 500);
 
+	let editor: PrismEditor | undefined;
+	$effect(() => {
+		const features = $userProvidedGeometry ?? [];
+		if (editor) {
+			editor.setOptions({
+				value: JSON.stringify(featureCollection(features), null, 2)
+			});
+		}
+	});
+
 	onMount(() => {
-		basicEditor('#editor', {
+		const features = $userProvidedGeometry ?? [];
+		editor = basicEditor('#editor', {
 			language: 'json',
 			theme: 'vs-code-light',
 			onUpdate,
-			value: JSON.stringify(featureCollection([]), null, 2)
+			value: JSON.stringify(featureCollection(features), null, 2)
 		});
 	});
 </script>

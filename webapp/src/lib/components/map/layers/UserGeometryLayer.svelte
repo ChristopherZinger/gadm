@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isGeojsonSource } from '$lib/stores/map-draw-store';
 	import { userProvidedGeometry } from '$lib/stores/user-provided-geometry';
 	import {
 		USER_GEOMETRY_FILL_LAYER_ID,
@@ -8,10 +9,6 @@
 	import { onMount } from 'svelte';
 
 	let { map }: { map: maplibregl.Map } = $props();
-
-	const isGeojsonSource = (f: maplibregl.Source): f is maplibregl.GeoJSONSource => {
-		return f.type === 'geojson';
-	};
 
 	const SourceId = 'user-geometry';
 
