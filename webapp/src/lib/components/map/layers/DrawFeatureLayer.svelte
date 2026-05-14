@@ -1,75 +1,103 @@
 <script lang="ts">
-	import { drawingModeStore, isGeojsonSource } from '$lib/stores/map-draw-store';
-	import { feature } from '@turf/turf';
+	import {
+		geometrySketchStore,
+		isGeojsonSource,
+		convertGeomSketchToPreviewFeature,
+		getCompleteFeatureFromGeometrySketch
+	} from '$lib/stores/map-draw-store';
 	import { onMount } from 'svelte';
 	import * as maplibregl from 'maplibre-gl';
 	import Control from '../controls/MapControl.svelte';
 	import { userProvidedGeometry } from '$lib/stores/user-provided-geometry';
 	import ShapesIcons from '$lib/icons/ShapesIcons.svelte';
 	import { colors } from '$lib/utills/colors';
-	import {
-		appendPointToGeometry,
-		convertLineStringToPolygon,
-		setGeometryTrailingPoint
-	} from '$lib/utills/geometry-utils';
+	import RectangleIcon from '$lib/icons/RectangleIcon.svelte';
 
 	let { map }: { map: maplibregl.Map } = $props();
 
 	const SourceId = 'draw-preview';
 
-	function onUpdatePreview(points: GeoJSON.Position[] | null) {
+	function onUpdatePreview(feature: GeoJSON.Feature<GeoJSON.Geometry> | null) {
 		const src = map.getSource(SourceId);
 		if (!src || !isGeojsonSource(src)) {
 			return;
 		}
 
-		if (!points) {
-			src.setData({
-				type: 'FeatureCollection',
-				features: []
-			});
-			return;
-		}
-
 		src.setData({
 			type: 'FeatureCollection',
-			features: [
-				feature({
-					type: 'LineString',
-					coordinates: points.map((point) => [point[0], point[1]])
-				})
-			]
+			features: feature ? [feature] : []
 		});
 	}
+
 	$effect(() => {
-		onUpdatePreview($drawingModeStore?.coordinates ?? null);
+		onUpdatePreview(convertGeomSketchToPreviewFeature($geometrySketchStore));
 	});
 
 	$effect(() => {
-		map.getCanvas().style.cursor = $drawingModeStore ? 'crosshair' : 'grab';
+		map.getCanvas().style.cursor = $geometrySketchStore ? 'crosshair' : 'grab';
 	});
 
 	function onMouseMove(e: maplibregl.MapMouseEvent) {
-		if ($drawingModeStore) {
-			const newPoint = [e.lngLat.lng, e.lngLat.lat];
-			drawingModeStore.set(setGeometryTrailingPoint($drawingModeStore, newPoint));
+		if (!$geometrySketchStore || $geometrySketchStore.points.length < 1) {
+			return;
+		}
+		const newPoint = [e.lngLat.lng, e.lngLat.lat];
+		if ($geometrySketchStore.mode === 'polygon') {
+			if ($geometrySketchStore.points.length > 1) {
+				geometrySketchStore.setTrailingPoint(newPoint);
+			} else {
+				geometrySketchStore.appendPoint(newPoint);
+			}
+			return;
+		}
+
+		if ($geometrySketchStore.mode === 'square') {
+			if ($geometrySketchStore.points.length > 1) {
+				geometrySketchStore.setTrailingPoint(newPoint);
+				return;
+			}
+			geometrySketchStore.appendPoint(newPoint);
 		}
 	}
 
 	function onMouseClick(e: maplibregl.MapMouseEvent) {
-		if ($drawingModeStore) {
-			const newPoint = [e.lngLat.lng, e.lngLat.lat];
-			drawingModeStore.set(appendPointToGeometry($drawingModeStore, newPoint));
+		if (!$geometrySketchStore) {
+			return;
 		}
+		const newPoint = [e.lngLat.lng, e.lngLat.lat];
+		geometrySketchStore.appendPoint(newPoint);
+		onDoneDrawingSquare();
 	}
 
 	function onDoubleClick() {
-		if (!$drawingModeStore) {
+		switch ($geometrySketchStore?.mode) {
+			case 'square': {
+				onDoneDrawingSquare();
+				return;
+			}
+			case 'polygon': {
+				onDoneDrawingPolygon();
+				return;
+			}
+		}
+	}
+
+	function onDoneDrawingSquare() {
+		if ($geometrySketchStore?.mode !== 'square' || $geometrySketchStore.points.length < 2) {
 			return;
 		}
-		const geometry = convertLineStringToPolygon($drawingModeStore);
-		userProvidedGeometry.set([...($userProvidedGeometry ?? []), feature(geometry)]);
-		drawingModeStore.reset();
+		const newFeature = getCompleteFeatureFromGeometrySketch($geometrySketchStore);
+		userProvidedGeometry.append(newFeature);
+		geometrySketchStore.reset();
+	}
+
+	function onDoneDrawingPolygon() {
+		if ($geometrySketchStore?.mode !== 'polygon') {
+			return;
+		}
+		const newFeature = getCompleteFeatureFromGeometrySketch($geometrySketchStore);
+		userProvidedGeometry.append(newFeature);
+		geometrySketchStore.reset();
 	}
 
 	onMount(() => {
@@ -112,10 +140,18 @@
 <Control {map} position="top-right">
 	<button
 		onclick={() => {
-			drawingModeStore.startDrawingMode('LineString');
+			geometrySketchStore.startDrawingMode('polygon');
 		}}
 		style="display: flex; align-items: center; justify-content: center;"
 	>
 		<ShapesIcons height={12} color={colors.blackAsh} />
+	</button>
+	<button
+		onclick={() => {
+			geometrySketchStore.startDrawingMode('square');
+		}}
+		style="display: flex; align-items: center; justify-content: center;"
+	>
+		<RectangleIcon height={12} color={colors.blackAsh} />
 	</button>
 </Control>

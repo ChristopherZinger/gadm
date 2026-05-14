@@ -1,23 +1,82 @@
 import { writable } from 'svelte/store';
 import type * as maplibregl from 'maplibre-gl';
+import { feature } from '@turf/turf';
+import { convertTwoPointsToSquarePolygon } from '$lib/utills/geometry-utils';
 
-export type GeometrySketch = GeoJSON.LineString
+export type GeometrySketch = {
+	mode: 'square' | 'polygon';
+	points: GeoJSON.Position[];
+};
 
-export const _drawingModeStore = writable<GeometrySketch | null>(null);
+export const _store = writable<GeometrySketch | null>(null);
 
-export const drawingModeStore = {
-	subscribe: _drawingModeStore.subscribe,
-	startDrawingMode: function (geometryType: GeometrySketch['type']) {
-		_drawingModeStore.set({ type: geometryType, coordinates: [] });
+export const geometrySketchStore = {
+	subscribe: _store.subscribe,
+	startDrawingMode: function (sketchType: GeometrySketch['mode']): null {
+		switch (sketchType) {
+			case 'polygon':
+				_store.set({ mode: 'polygon', points: [] });
+				return null;
+			case 'square':
+				_store.set({ mode: 'square', points: [] });
+				return null;
+		}
 	},
-	set: function (d: GeometrySketch) {
-		_drawingModeStore.set(d);
+	appendPoint: function (point: GeoJSON.Position) {
+		_store.update((v) => {
+			if (!v) {
+				return null;
+			}
+			if (v.mode === 'square' && v.points.length > 1) {
+				return v;
+			}
+			return { ...v, points: [...v.points, point] };
+		});
+	},
+	setTrailingPoint: function (point: GeoJSON.Position) {
+		_store.update((v) => {
+			if (!v) {
+				return null;
+			}
+			return { ...v, points: [...v.points.slice(0, -1), point] };
+		});
 	},
 	reset: function () {
-		_drawingModeStore.set(null);
-	},
+		_store.set(null);
+	}
 };
 
 export function isGeojsonSource(f: maplibregl.Source): f is maplibregl.GeoJSONSource {
 	return f.type === 'geojson';
+}
+
+export function convertGeomSketchToPreviewFeature(
+	sketch: GeometrySketch | null
+): GeoJSON.Feature<GeoJSON.Geometry> | null {
+	if (!sketch) {
+		return null;
+	}
+	switch (sketch.mode) {
+		case 'polygon':
+			return feature({
+				type: 'LineString',
+				coordinates: sketch.points
+			});
+		case 'square':
+			return feature(convertTwoPointsToSquarePolygon(sketch.points));
+	}
+}
+
+export function getCompleteFeatureFromGeometrySketch(
+	sketch: GeometrySketch
+): GeoJSON.Feature<GeoJSON.Geometry>  {
+	switch (sketch.mode) {
+		case 'polygon':
+			return feature({
+				type: 'Polygon',
+				coordinates: [[...sketch.points, sketch.points[0]]]
+			});
+		case 'square':
+			return feature(convertTwoPointsToSquarePolygon(sketch.points));
+	}
 }

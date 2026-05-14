@@ -1,20 +1,23 @@
-export function appendPointToGeometry(geometry: GeoJSON.LineString, position: GeoJSON.Position) {
-	return {
-		...geometry,
-		coordinates: [...geometry.coordinates, position]
-	};
-}
-
-export function setGeometryTrailingPoint(geometry: GeoJSON.LineString, position: GeoJSON.Position) {
-	return {
-		...geometry,
-		coordinates: [...geometry.coordinates.slice(0, -1), position]
-	};
-}
-
-export function convertLineStringToPolygon(geometry: GeoJSON.LineString): GeoJSON.Polygon {
-	return {
+export function convertTwoPointsToSquarePolygon(
+	points: GeoJSON.Position[]
+): GeoJSON.Polygon | null {
+	if (points.length < 2) {
+		console.warn('Requires at least two points to convert to a square polygon');
+		return null;
+	}
+	const [x1, y1] = points[0];
+	const [x2, y2] = points[1];
+	const square: GeoJSON.Polygon = {
 		type: 'Polygon',
-		coordinates: [[...geometry.coordinates, geometry.coordinates[0]]]
+		coordinates: [
+			[
+				[x1, y1],
+				[x2, y1],
+				[x2, y2],
+				[x1, y2],
+				[x1, y1]
+			]
+		]
 	};
+	return square;
 }
