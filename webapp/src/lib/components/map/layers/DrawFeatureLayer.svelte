@@ -7,6 +7,11 @@
 	import { userProvidedGeometry } from '$lib/stores/user-provided-geometry';
 	import ShapesIcons from '$lib/icons/ShapesIcons.svelte';
 	import { colors } from '$lib/utills/colors';
+	import {
+		appendPointToGeometry,
+		convertLineStringToPolygon,
+		setGeometryTrailingPoint
+	} from '$lib/utills/geometry-utils';
 
 	let { map }: { map: maplibregl.Map } = $props();
 
@@ -37,7 +42,7 @@
 		});
 	}
 	$effect(() => {
-		onUpdatePreview($drawingModeStore?.points ?? null);
+		onUpdatePreview($drawingModeStore?.coordinates ?? null);
 	});
 
 	$effect(() => {
@@ -46,13 +51,15 @@
 
 	function onMouseMove(e: maplibregl.MapMouseEvent) {
 		if ($drawingModeStore) {
-			drawingModeStore.setHead([e.lngLat.lng, e.lngLat.lat]);
+			const newPoint = [e.lngLat.lng, e.lngLat.lat];
+			drawingModeStore.set(setGeometryTrailingPoint($drawingModeStore, newPoint));
 		}
 	}
 
 	function onMouseClick(e: maplibregl.MapMouseEvent) {
 		if ($drawingModeStore) {
-			drawingModeStore.appendPoint([e.lngLat.lng, e.lngLat.lat]);
+			const newPoint = [e.lngLat.lng, e.lngLat.lat];
+			drawingModeStore.set(appendPointToGeometry($drawingModeStore, newPoint));
 		}
 	}
 
@@ -60,14 +67,8 @@
 		if (!$drawingModeStore) {
 			return;
 		}
-		const points = $drawingModeStore.points;
-		userProvidedGeometry.set([
-			...($userProvidedGeometry ?? []),
-			feature({
-				type: 'Polygon',
-				coordinates: [[...points, points[0]].map((p) => p)]
-			})
-		]);
+		const geometry = convertLineStringToPolygon($drawingModeStore);
+		userProvidedGeometry.set([...($userProvidedGeometry ?? []), feature(geometry)]);
 		drawingModeStore.reset();
 	}
 
@@ -111,7 +112,7 @@
 <Control {map} position="top-right">
 	<button
 		onclick={() => {
-			drawingModeStore.startDrawingMode('polygon');
+			drawingModeStore.startDrawingMode('LineString');
 		}}
 		style="display: flex; align-items: center; justify-content: center;"
 	>
