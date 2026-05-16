@@ -4,10 +4,16 @@
 	import type * as maplibregl from 'maplibre-gl';
 	import { onDestroy, onMount } from 'svelte';
 	import { hoveredFeature, selectedAdmInfo, selectedFeature } from '$lib/stores/map-selection';
+	import { geometrySketchStore } from '$lib/stores/map-draw-store';
 
 	let { map }: { map: maplibregl.Map } = $props();
 
+	let isInteractionDisabled = $derived($geometrySketchStore !== null);
+
 	const onMouseClick = (e: maplibregl.MapMouseEvent) => {
+		if (isInteractionDisabled) {
+			return;
+		}
 		const mapFeatures = map.queryRenderedFeatures(e.point, {
 			layers: getEligibleInteractiveLayersInOrder()
 		});
@@ -18,6 +24,9 @@
 	};
 
 	const onMouseMove = (e: maplibregl.MapMouseEvent) => {
+		if (isInteractionDisabled) {
+			return;
+		}
 		const mapFeatures = map.queryRenderedFeatures(e.point, {
 			layers: getEligibleInteractiveLayersInOrder()
 		});
