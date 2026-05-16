@@ -1,10 +1,10 @@
 import { writable } from 'svelte/store';
 import type * as maplibregl from 'maplibre-gl';
-import { feature } from '@turf/turf';
+import { feature, circle, distance } from '@turf/turf';
 import { convertTwoPointsToSquarePolygon } from '$lib/utills/geometry-utils';
 
 export type GeometrySketch = {
-	mode: 'square' | 'polygon';
+	mode: 'square' | 'polygon' | 'circle';
 	points: GeoJSON.Position[];
 };
 
@@ -20,6 +20,9 @@ export const geometrySketchStore = {
 			case 'square':
 				_store.set({ mode: 'square', points: [] });
 				return null;
+			case 'circle':
+				_store.set({ mode: 'circle', points: [] });
+				return null;
 		}
 	},
 	appendPoint: function (point: GeoJSON.Position) {
@@ -27,7 +30,7 @@ export const geometrySketchStore = {
 			if (!v) {
 				return null;
 			}
-			if (v.mode === 'square' && v.points.length > 1) {
+			if ((v.mode === 'square' || v.mode === 'circle') && v.points.length > 1) {
 				return v;
 			}
 			return { ...v, points: [...v.points, point] };
@@ -64,12 +67,22 @@ export function convertGeomSketchToPreviewFeature(
 			});
 		case 'square':
 			return feature(convertTwoPointsToSquarePolygon(sketch.points));
+		case 'circle': {
+			if (sketch.points.length < 2) {
+				return null
+			}
+			const units = 'meters' as const;
+			return circle(sketch.points[0], distance(sketch.points[0], sketch.points[1], { units }), {
+				steps: 64,
+				units
+			});
+		}
 	}
 }
 
 export function getCompleteFeatureFromGeometrySketch(
 	sketch: GeometrySketch
-): GeoJSON.Feature<GeoJSON.Geometry>  {
+): GeoJSON.Feature<GeoJSON.Geometry> {
 	switch (sketch.mode) {
 		case 'polygon':
 			return feature({
@@ -78,5 +91,12 @@ export function getCompleteFeatureFromGeometrySketch(
 			});
 		case 'square':
 			return feature(convertTwoPointsToSquarePolygon(sketch.points));
+		case 'circle': {
+			const units = 'meters' as const;
+			return circle(sketch.points[0], distance(sketch.points[0], sketch.points[1], { units }), {
+				steps: 64,
+				units
+			});
+		}
 	}
 }

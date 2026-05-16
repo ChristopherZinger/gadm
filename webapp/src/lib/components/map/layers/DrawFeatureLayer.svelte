@@ -12,6 +12,7 @@
 	import ShapesIcons from '$lib/icons/ShapesIcons.svelte';
 	import { colors } from '$lib/utills/colors';
 	import RectangleIcon from '$lib/icons/RectangleIcon.svelte';
+	import CircleIcon from '$lib/icons/CircleIcon.svelte';
 
 	let { map }: { map: maplibregl.Map } = $props();
 
@@ -57,6 +58,16 @@
 				return;
 			}
 			geometrySketchStore.appendPoint(newPoint);
+			return;
+		}
+
+		if ($geometrySketchStore.mode === 'circle') {
+			if ($geometrySketchStore.points.length > 1) {
+				geometrySketchStore.setTrailingPoint(newPoint);
+				return;
+			}
+			geometrySketchStore.appendPoint(newPoint);
+			return;
 		}
 	}
 
@@ -67,6 +78,7 @@
 		const newPoint = [e.lngLat.lng, e.lngLat.lat];
 		geometrySketchStore.appendPoint(newPoint);
 		onDoneDrawingSquare();
+		onDoneDrawingCircle();
 	}
 
 	function onDoubleClick() {
@@ -79,11 +91,24 @@
 				onDoneDrawingPolygon();
 				return;
 			}
+			case 'circle': {
+				onDoneDrawingCircle();
+				return;
+			}
 		}
 	}
 
 	function onDoneDrawingSquare() {
 		if ($geometrySketchStore?.mode !== 'square' || $geometrySketchStore.points.length < 2) {
+			return;
+		}
+		const newFeature = getCompleteFeatureFromGeometrySketch($geometrySketchStore);
+		userProvidedGeometry.append(newFeature);
+		geometrySketchStore.reset();
+	}
+
+	function onDoneDrawingCircle() {
+		if ($geometrySketchStore?.mode !== 'circle' || $geometrySketchStore.points.length < 2) {
 			return;
 		}
 		const newFeature = getCompleteFeatureFromGeometrySketch($geometrySketchStore);
@@ -153,5 +178,13 @@
 		style="display: flex; align-items: center; justify-content: center;"
 	>
 		<RectangleIcon height={12} color={colors.blackAsh} />
+	</button>
+	<button
+		onclick={() => {
+			geometrySketchStore.startDrawingMode('circle');
+		}}
+		style="display: flex; align-items: center; justify-content: center;"
+	>
+		<CircleIcon height={12} color={colors.blackAsh} />
 	</button>
 </Control>
