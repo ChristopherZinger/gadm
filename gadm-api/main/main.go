@@ -9,6 +9,7 @@ import (
 	db "gadm-api/db"
 	handlers "gadm-api/handlers"
 	"gadm-api/logger"
+	"gadm-api/models/adm"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -51,6 +52,11 @@ func main() {
 
 	reverseGeocodeHandlerInfo := handlers.GetReverseGeocodeHandlerInfo(pgConn)
 	mux.HandleFunc(reverseGeocodeHandlerInfo.Url, reverseGeocodeHandlerInfo.Handler)
+
+	admRepo := adm.NewAdmRepo(pgConn.Db)
+	admService := adm.NewAdmService(admRepo)
+	admHandler := adm.NewAdmNeighborsHandler(admService)
+	mux.HandleFunc("/api/v1/adm-neighbors", admHandler.AdmNeighborsHandler)
 
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
 
