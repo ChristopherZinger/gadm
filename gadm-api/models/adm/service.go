@@ -1,6 +1,9 @@
 package adm
 
-import "context"
+import (
+	"context"
+	"gadm-api/utils"
+)
 
 type Service struct {
 	repo *Repo
@@ -18,8 +21,8 @@ func (service *Service) GetAdmNeighbors(ctx context.Context, admId string) ([]Ad
 	return result, nil
 }
 
-func (service *Service) GetAdmForLatLng(ctx context.Context, lat float64, lng float64) (Adm, error) {
-	result, err := service.repo.GetAdmForLatLng(ctx, lat, lng)
+func (service *Service) GetAdmForPoint(ctx context.Context, point utils.Point) (Adm, error) {
+	result, err := service.repo.GetAdmForPoint(ctx, point)
 	if err != nil {
 		return Adm{}, err
 	}

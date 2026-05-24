@@ -2,10 +2,12 @@ package adm
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"gadm-api/logger"
+	"gadm-api/utils"
 
 	geojson "github.com/paulmach/go.geojson"
 )
@@ -52,30 +54,14 @@ func (handler *Handler) AdmForLatLngHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (handler *Handler) getAdmForLatLngHandler(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	point, err := getPointFromRequestBody(r)
 	if err != nil {
-		logger.Error("failed_to_read_request_body %v", err)
-		http.Error(w, "internal_server_error", http.StatusInternalServerError)
-		return
-	}
-
-	geometry, err := geojson.UnmarshalGeometry(body)
-	if err != nil {
-		logger.Error("failed_to_unmarshal_geometry %v", err)
+		logger.Error("failed_to_get_lat_lng_from_request_body %v", err)
 		http.Error(w, "invalid_request", http.StatusBadRequest)
 		return
 	}
 
-	if geometry.Type != "Point" {
-		logger.Error("invalid_geometry_type type=%s", geometry.Type)
-		http.Error(w, "invalid_request", http.StatusBadRequest)
-		return
-	}
-
-	lng := geometry.Point[0]
-	lat := geometry.Point[1]
-
-	result, err := handler.service.GetAdmForLatLng(r.Context(), lat, lng)
+	result, err := handler.service.GetAdmForPoint(r.Context(), point)
 	if err != nil {
 		logger.Error("failed_to_get_adm_for_lat_lng %v", err)
 		http.Error(w, "internal_server_error", http.StatusInternalServerError)
@@ -84,4 +70,22 @@ func (handler *Handler) getAdmForLatLngHandler(w http.ResponseWriter, r *http.Re
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
+}
+
+func getPointFromRequestBody(r *http.Request) (utils.Point, error) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return utils.Point{}, fmt.Errorf("failed_to_read_request_body: %w", err)
+	}
+
+	geometry, err := geojson.UnmarshalGeometry(body)
+	if err != nil {
+		return utils.Point{}, fmt.Errorf("failed_to_unmarshal_geometry: %w", err)
+	}
+
+	if geometry.Type != "Point" {
+		return utils.Point{}, fmt.Errorf("invalid_geometry_type: type %s", geometry.Type)
+	}
+
+	return utils.NewPointLngLat(geometry.Point[0], geometry.Point[1]), nil
 }

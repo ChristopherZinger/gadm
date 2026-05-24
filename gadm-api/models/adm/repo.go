@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gadm-api/utils"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -50,8 +51,8 @@ func (repo *Repo) GetAdmNeighbors(ctx context.Context, admId string) ([]Adm, err
 	return result, nil
 }
 
-func (repo *Repo) GetAdmForLatLng(ctx context.Context, lat float64, lng float64) (Adm, error) {
-	sql, args, err := getAdmForLatLngSqlQuery(lat, lng)
+func (repo *Repo) GetAdmForPoint(ctx context.Context, point utils.Point) (Adm, error) {
+	sql, args, err := getAdmForPointSqlQuery(point)
 	if err != nil {
 		return Adm{}, fmt.Errorf("failed_to_build_query: %w", err)
 	}

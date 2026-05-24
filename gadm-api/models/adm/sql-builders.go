@@ -1,5 +1,7 @@
 package adm
 
+import "gadm-api/utils"
+
 func getAdmNeighborsSqlQuery(admId string) (string, []interface{}, error) {
 	withClause := `
 		with ids as (SELECT DISTINCT id FROM adm_neighbors 
@@ -20,7 +22,7 @@ func getAdmNeighborsSqlQuery(admId string) (string, []interface{}, error) {
 	return sql, args, nil
 }
 
-func getAdmForLatLngSqlQuery(lat float64, lng float64) (string, []interface{}, error) {
+func getAdmForPointSqlQuery(point utils.Point) (string, []interface{}, error) {
 	withClause := `
 		WITH input_point AS (
 			SELECT ST_SetSRID(ST_MakePoint(?, ?), 4326)::geometry(Point,4326) AS pt
@@ -43,7 +45,7 @@ func getAdmForLatLngSqlQuery(lat float64, lng float64) (string, []interface{}, e
 
 	query := psql.
 		Select("adm.metadata", "adm.id", "adm.lv", "adm.geom_hash").
-		Prefix(withClause, lng, lat).
+		Prefix(withClause, point.Lng, point.Lat).
 		From("adm").
 		InnerJoin("result_geometry ON adm.geom_hash = result_geometry.geom_hash").
 		Limit(1)
