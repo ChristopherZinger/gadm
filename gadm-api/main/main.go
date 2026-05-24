@@ -50,13 +50,11 @@ func main() {
 	createAccessTokenHandlerInfo := handlers.GetAccessTokenCreationHandlerInfo(pgConn)
 	mux.HandleFunc(createAccessTokenHandlerInfo.Url, createAccessTokenHandlerInfo.Handler)
 
-	reverseGeocodeHandlerInfo := handlers.GetReverseGeocodeHandlerInfo(pgConn)
-	mux.HandleFunc(reverseGeocodeHandlerInfo.Url, reverseGeocodeHandlerInfo.Handler)
-
 	admRepo := adm.NewAdmRepo(pgConn.Db)
 	admService := adm.NewAdmService(admRepo)
 	admHandler := adm.NewAdmNeighborsHandler(admService)
 	mux.HandleFunc("/api/v1/adm-neighbors", admHandler.AdmNeighborsHandler)
+	mux.HandleFunc("/api/v1/reverse-geocode", admHandler.AdmForLatLngHandler)
 
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
 

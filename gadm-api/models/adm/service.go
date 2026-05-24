@@ -17,3 +17,11 @@ func (service *Service) GetAdmNeighbors(ctx context.Context, admId string) ([]Ad
 	}
 	return result, nil
 }
+
+func (service *Service) GetAdmForLatLng(ctx context.Context, lat float64, lng float64) (Adm, error) {
+	result, err := service.repo.GetAdmForLatLng(ctx, lat, lng)
+	if err != nil {
+		return Adm{}, err
+	}
+	return result, nil
+}
