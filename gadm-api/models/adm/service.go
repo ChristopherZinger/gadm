@@ -28,3 +28,15 @@ func (service *Service) GetAdmForPoint(ctx context.Context, point utils.Point) (
 	}
 	return result, nil
 }
+
+func (service *Service) GetAdmNeighborsForPoint(ctx context.Context, point utils.Point) ([]Adm, error) {
+	result, err := service.repo.GetAdmForPoint(ctx, point)
+	if err != nil {
+		return nil, err
+	}
+	neighbors, err := service.repo.GetAdmNeighbors(ctx, result.ID)
+	if err != nil {
+		return nil, err
+	}
+	return neighbors, nil
+}

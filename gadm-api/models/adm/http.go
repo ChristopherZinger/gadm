@@ -25,6 +25,11 @@ func (handler *Handler) AdmNeighborsHandler(w http.ResponseWriter, r *http.Reque
 		handler.getAdmNeighborsHandler(w, r)
 		return
 	}
+	if r.Method == http.MethodPost {
+		handler.postAdmNeighborsForPointHandler(w, r)
+		return
+	}
+	logger.Error("method_not_allowed %s", r.Method)
 	http.Error(w, "method_not_allowed", http.StatusMethodNotAllowed)
 }
 
@@ -47,13 +52,32 @@ func (handler *Handler) getAdmNeighborsHandler(w http.ResponseWriter, r *http.Re
 
 func (handler *Handler) AdmForLatLngHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		handler.getAdmForLatLngHandler(w, r)
+		handler.getAdmForPointHandler(w, r)
 		return
 	}
+
+	logger.Error("method_not_allowed %s", r.Method)
 	http.Error(w, "method_not_allowed", http.StatusMethodNotAllowed)
 }
 
-func (handler *Handler) getAdmForLatLngHandler(w http.ResponseWriter, r *http.Request) {
+func (handler *Handler) postAdmNeighborsForPointHandler(w http.ResponseWriter, r *http.Request) {
+	point, err := getPointFromRequestBody(r)
+	if err != nil {
+		logger.Error("failed_to_get_point_from_request_body %v", err)
+		http.Error(w, "invalid_request", http.StatusBadRequest)
+		return
+	}
+
+	result, err := handler.service.GetAdmNeighborsForPoint(r.Context(), point)
+	if err != nil {
+		logger.Error("failed_to_get_adm_neighbors_for_point %v", err)
+		http.Error(w, "internal_server_error", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(result)
+}
+
+func (handler *Handler) getAdmForPointHandler(w http.ResponseWriter, r *http.Request) {
 	point, err := getPointFromRequestBody(r)
 	if err != nil {
 		logger.Error("failed_to_get_lat_lng_from_request_body %v", err)
