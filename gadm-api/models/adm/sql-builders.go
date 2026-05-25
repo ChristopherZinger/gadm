@@ -1,6 +1,9 @@
 package adm
 
-import "gadm-api/utils"
+import (
+	"fmt"
+	"gadm-api/utils"
+)
 
 func getAdmNeighborsSqlQuery(admId string) (string, []interface{}, error) {
 	withClause := `
@@ -49,6 +52,73 @@ func getAdmForPointSqlQuery(point utils.Point) (string, []interface{}, error) {
 		From("adm").
 		InnerJoin("result_geometry ON adm.geom_hash = result_geometry.geom_hash").
 		Limit(1)
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
+
+func getSelectOneAdmByIdSqlQuery(admId string) (string, []interface{}, error) {
+	query := psql.
+		Select("adm.metadata", "adm.id", "adm.lv", "adm.geom_hash").
+		From("adm").
+		Where("adm.id = $1", admId).
+		Limit(1)
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
+
+func getSelectAdmsSqlQuery(startAfterId string, batchSize int) (string, []interface{}, error) {
+	query := psql.
+		Select("adm.metadata", "adm.id", "adm.lv", "adm.geom_hash").
+		From("adm")
+
+	if startAfterId != "" {
+		query = query.Where("adm.id > $1", startAfterId)
+	}
+
+	query = query.OrderBy("adm.id").OrderBy("adm.id").Limit(uint64(batchSize))
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
+
+func getUpsertAdmTreeSqlQuery(parentId string, childIds []string) (string, []interface{}, error) {
+	if len(childIds) == 0 {
+		return "", nil, nil
+	}
+
+	query := psql.
+		Insert("gadm.adm_tree").
+		Columns("parent", "child").
+		Suffix("ON CONFLICT (parent, child) DO NOTHING")
+
+	for _, childId := range childIds {
+		query = query.Values(parentId, childId)
+	}
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
+
+func getSelectAdmDirectChildrenForIdSqlQuery(admId string, lv int) (string, []interface{}, error) {
+	query := psql.
+		Select("adm.metadata", "adm.id", "adm.lv", "adm.geom_hash").
+		From("adm").
+		Where(fmt.Sprintf("adm.metadata->>'gid_%d' = $1", lv), admId).
+		Where("adm.lv = $2", lv+1)
 
 	sql, args, err := query.ToSql()
 	if err != nil {

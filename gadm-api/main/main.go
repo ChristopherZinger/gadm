@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -27,34 +26,64 @@ func main() {
 	case "rest_api":
 		startRestApi()
 	case "cron_job":
-		fmt.Println("starting cron job")
+		runCronJob()
 	default:
 		logger.Fatal("invalid_api_type %s", os.Getenv("API_TYPE"))
 	}
 }
 
-func startRestApi() {
+const MAX_PG_CONNS = int32(45)
+
+func initPgPool(poolSize int32) *pgxpool.Pool {
 	pgUrl := os.Getenv(DATABASE_URL_ENV_VAR)
 	if pgUrl == "" {
 		logger.Fatal("missing_db_url_env_variable %s", DATABASE_URL_ENV_VAR) // TODO: expect var from config file util
 	}
 
-	dbPool, err := pgxpool.New(context.Background(), pgUrl)
+	cfg, err := pgxpool.ParseConfig(pgUrl)
 	if err != nil {
-		logger.Error("failed_to_connect_to_database %v", err)
-		os.Exit(1)
+		logger.Fatal("failed_to_parse_db_url %v", err)
 	}
+	cfg.MaxConns = poolSize
+
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	if err != nil {
+		logger.Fatal("failed_to_connect_to_database %v", err)
+	}
+
+	return dbPool
+}
+
+func runCronJob() {
+	dbPool := initPgPool(MAX_PG_CONNS)
 	defer dbPool.Close()
 
+	admRepo := adm.NewAdmRepo(dbPool)
+	admService := adm.NewAdmService(admRepo)
+	err := admService.PopulateAdmTree(context.Background())
+	if err != nil {
+		logger.Fatal("failed_to_populate_adm_tree %v", err)
+	}
+}
+
+func startRestApi() {
+	dbPool := initPgPool(MAX_PG_CONNS)
+	defer dbPool.Close()
 	pgConn := db.CreatePgConnector(dbPool)
 	mux := http.NewServeMux()
 
 	geojsonlHandlers, err := handlers.CreateGeojsonlHandlers(pgConn)
+	if err != nil {
+		logger.Fatal("failed_to_create_geojsonl_handlers %v", err)
+	}
 	for _, handlerInfo := range geojsonlHandlers {
 		mux.HandleFunc(handlerInfo.Url, handlerInfo.Handler)
 	}
 
 	featureCollectionHandlers, err := handlers.CreateFeatureCollectionHandlers(pgConn)
+	if err != nil {
+		logger.Fatal("failed_to_create_feature_collection_handlers %v", err)
+	}
 	for _, handlerInfo := range featureCollectionHandlers {
 		mux.HandleFunc(handlerInfo.Url, handlerInfo.Handler)
 	}
@@ -62,7 +91,7 @@ func startRestApi() {
 	createAccessTokenHandlerInfo := handlers.GetAccessTokenCreationHandlerInfo(pgConn)
 	mux.HandleFunc(createAccessTokenHandlerInfo.Url, createAccessTokenHandlerInfo.Handler)
 
-	admRepo := adm.NewAdmRepo(pgConn.Db)
+	admRepo := adm.NewAdmRepo(dbPool)
 	admService := adm.NewAdmService(admRepo)
 	admHandler := adm.NewAdmNeighborsHandler(admService)
 	mux.HandleFunc("/api/v1/adm-neighbors", admHandler.AdmNeighborsHandler)

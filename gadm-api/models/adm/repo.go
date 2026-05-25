@@ -57,17 +57,80 @@ func (repo *Repo) GetAdmForPoint(ctx context.Context, point utils.Point) (Adm, e
 		return Adm{}, fmt.Errorf("failed_to_build_query: %w", err)
 	}
 
-	rows, err := repo.pgConn.Query(ctx, sql, args...)
+	var adm Adm
+	err = repo.pgConn.QueryRow(ctx, sql, args...).
+		Scan(&adm.Metadata, &adm.ID, &adm.Level, &adm.GeomHash)
 	if err != nil {
 		return Adm{}, fmt.Errorf(
 			"failed_to_query_database_for_adm_for_lat_lng: sql_query: %s: %w",
 			sql, err)
 	}
+	return adm, nil
+}
+
+func (repo *Repo) GetAdmById(ctx context.Context, admId string) (Adm, error) {
+	sql, args, err := getSelectOneAdmByIdSqlQuery(admId)
+	if err != nil {
+		return Adm{}, fmt.Errorf("failed_to_build_query: %w", err)
+	}
+
+	var adm Adm
+	err = repo.pgConn.QueryRow(ctx, sql, args...).
+		Scan(&adm.Metadata, &adm.ID, &adm.Level, &adm.GeomHash)
+	if err != nil {
+		return Adm{}, fmt.Errorf("failed_to_query_database_for_adm_by_id: sql_query: %s: %w", sql, err)
+	}
+	return adm, nil
+}
+
+func (repo *Repo) GetAdmsDirectChildrenForId(ctx context.Context, admId string, lv int) ([]Adm, error) {
+	sql, args, err := getSelectAdmDirectChildrenForIdSqlQuery(admId, lv)
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_build_query: %w", err)
+	}
+
+	rows, err := repo.pgConn.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_query_database_for_adm_direct_children_for_id: sql_query: %s: %w", sql, err)
+	}
 	defer rows.Close()
 
-	result, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[Adm])
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
 	if err != nil {
-		return Adm{}, fmt.Errorf("failed_to_collect_row: %w", err)
+		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
+	}
+
+	return result, nil
+}
+
+func (repo *Repo) UpsertAdmTreeRelationships(ctx context.Context, parentId string, childIds []string) error {
+	sql, args, err := getUpsertAdmTreeSqlQuery(parentId, childIds)
+	if err != nil {
+		return fmt.Errorf("failed_to_build_query: %w", err)
+	}
+
+	_, err = repo.pgConn.Exec(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("failed_to_upsert_adm_tree_relationships: sql_query: %s: %w", sql, err)
+	}
+	return nil
+}
+
+func (repo *Repo) GetAdms(ctx context.Context, startAfterId string, batchSize int) ([]Adm, error) {
+	sql, args, err := getSelectAdmsSqlQuery(startAfterId, batchSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_build_query: %w", err)
+	}
+
+	rows, err := repo.pgConn.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_query_database_for_adm_tree_relationships: sql_query: %s: %w", sql, err)
+	}
+	defer rows.Close()
+
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
 	}
 
 	return result, nil
