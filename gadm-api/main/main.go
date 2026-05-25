@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -22,6 +23,17 @@ func main() {
 		logger.Warning("could_not_load_env_file %v", err)
 	}
 
+	switch os.Getenv("SERVICE_TYPE") {
+	case "rest_api":
+		startRestApi()
+	case "cron_job":
+		fmt.Println("starting cron job")
+	default:
+		logger.Fatal("invalid_api_type %s", os.Getenv("API_TYPE"))
+	}
+}
+
+func startRestApi() {
 	pgUrl := os.Getenv(DATABASE_URL_ENV_VAR)
 	if pgUrl == "" {
 		logger.Fatal("missing_db_url_env_variable %s", DATABASE_URL_ENV_VAR) // TODO: expect var from config file util

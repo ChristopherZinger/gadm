@@ -36,6 +36,7 @@ services:
     container_name: gadm-api
     environment:
       DATABASE_URL: 'postgres://${PG_USER}:${PG_PASSWORD}@${DB_HOST}:${DB_PORT}/${PG_DB_NAME}'
+      SERVICE_TYPE: "rest_api"
     ports:
       - "8081:8080"
     depends_on:
