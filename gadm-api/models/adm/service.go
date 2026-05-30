@@ -110,7 +110,7 @@ func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
 
 	processBatch := func(ctx context.Context, batch []Adm) error {
 		g, gctx := errgroup.WithContext(ctx)
-		g.SetLimit(15)
+		g.SetLimit(5)
 
 		for _, adm := range batch {
 			g.Go(func() error {
