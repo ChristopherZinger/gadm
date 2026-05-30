@@ -1,21 +1,19 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"os"
 
 	db "gadm-api/db"
 	handlers "gadm-api/handlers"
+	"gadm-api/infra/pg"
+	"gadm-api/jobs"
 	"gadm-api/logger"
 	"gadm-api/models/adm"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
-
-var DATABASE_URL_ENV_VAR = "DATABASE_URL"
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -26,7 +24,18 @@ func main() {
 	case "rest_api":
 		startRestApi()
 	case "cron_job":
-		runCronJob()
+		jobName := os.Getenv("CRON_JOB_NAME")
+		if jobName == "" {
+			logger.Fatal("missing_cron_job_name")
+		}
+		switch jobName {
+		case "populate_adm_tree":
+			jobs.PopulateAdmTreeJob()
+		case "populate_adm_neighbors":
+			jobs.PopulateAdmNeighborsJob()
+		default:
+			logger.Fatal("unknown_cron_job_name %s", jobName)
+		}
 	default:
 		logger.Fatal("invalid_api_type %s", os.Getenv("API_TYPE"))
 	}
@@ -34,40 +43,8 @@ func main() {
 
 const MAX_PG_CONNS = int32(45)
 
-func initPgPool(poolSize int32) *pgxpool.Pool {
-	pgUrl := os.Getenv(DATABASE_URL_ENV_VAR)
-	if pgUrl == "" {
-		logger.Fatal("missing_db_url_env_variable %s", DATABASE_URL_ENV_VAR) // TODO: expect var from config file util
-	}
-
-	cfg, err := pgxpool.ParseConfig(pgUrl)
-	if err != nil {
-		logger.Fatal("failed_to_parse_db_url %v", err)
-	}
-	cfg.MaxConns = poolSize
-
-	dbPool, err := pgxpool.NewWithConfig(context.Background(), cfg)
-	if err != nil {
-		logger.Fatal("failed_to_connect_to_database %v", err)
-	}
-
-	return dbPool
-}
-
-func runCronJob() {
-	dbPool := initPgPool(MAX_PG_CONNS)
-	defer dbPool.Close()
-
-	admRepo := adm.NewAdmRepo(dbPool)
-	admService := adm.NewAdmService(admRepo)
-	err := admService.PopulateAdmTree(context.Background())
-	if err != nil {
-		logger.Fatal("failed_to_populate_adm_tree %v", err)
-	}
-}
-
 func startRestApi() {
-	dbPool := initPgPool(MAX_PG_CONNS)
+	dbPool := pg.InitPgPool(MAX_PG_CONNS)
 	defer dbPool.Close()
 	pgConn := db.CreatePgConnector(dbPool)
 	mux := http.NewServeMux()
