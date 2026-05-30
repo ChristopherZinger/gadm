@@ -1,9 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}/.."
 
-SERVICE_TYPE="cron_job"
-CRON_JOB_NAME="populate_adm_neighbors"
-
-export SERVICE_TYPE
-export CRON_JOB_NAME
-
-cd main && go run .
+exec docker compose run --rm --build \
+  -e SERVICE_TYPE=cron_job \
+  -e CRON_JOB_NAME=populate_adm_neighbors \
+  gadm-api | tee pop-neighbors.log
