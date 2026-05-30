@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gadm-api/logger"
 	"gadm-api/utils"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -104,5 +105,62 @@ func (service *Service) PopulateAdmTree(ctx context.Context) error {
 }
 
 func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
-	return fmt.Errorf("not implemented")
+	batchSize := 300
+	processedCount := 0
+
+	processBatch := func(ctx context.Context, batch []Adm) error {
+		g, gctx := errgroup.WithContext(ctx)
+		g.SetLimit(5) // keep this low to avoid OOM
+
+		for _, adm := range batch {
+			g.Go(func() error {
+				neighbors, err := utils.Retry(
+					gctx,
+					func(ctx context.Context) ([]Adm, error) {
+						return service.repo.GetNeighbors(ctx, adm.ID)
+					},
+					3,
+					1*time.Second,
+					10*time.Second)
+				if err != nil {
+					if gctx.Err() != nil {
+						return gctx.Err()
+					}
+					logger.Error("skip_adm_neighbors: adm_id=%s err=%v", adm.ID, err)
+					return nil
+				}
+
+				logger.Info("neighbors for adm_id=%s: %d", adm.ID, len(neighbors))
+
+				for _, neighbor := range neighbors {
+					if neighbor.ID == adm.ID {
+						continue
+					}
+					if err := service.repo.UpsertAdmNeighbors(gctx, adm.ID, neighbor.ID); err != nil {
+						return fmt.Errorf(
+							"failed_to_upsert_neighbors: adm_id=%s neighbor_id=%s: %w",
+							adm.ID, neighbor.ID, err)
+					}
+				}
+				processedCount++
+				return nil
+			})
+		}
+
+		if err := g.Wait(); err != nil {
+			return err
+		}
+
+		lastId := batch[len(batch)-1].ID
+		logger.Info("populate_adm_neighbors_progress processed=%d last_id=%s", processedCount, lastId)
+		return nil
+	}
+
+	err := service.repo.IterateLeafAdms(ctx, batchSize, processBatch)
+	if err != nil {
+		return err
+	}
+
+	logger.Info("populate_adm_neighbors_done processed=%d", processedCount)
+	return nil
 }

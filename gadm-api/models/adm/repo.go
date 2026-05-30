@@ -135,3 +135,84 @@ func (repo *Repo) GetAdms(ctx context.Context, startAfterId string, batchSize in
 
 	return result, nil
 }
+
+func (repo *Repo) GetNeighbors(ctx context.Context, admId string) ([]Adm, error) {
+	sql, args, err := getNeighborsSqlQuery(admId)
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_build_query: %w", err)
+	}
+
+	rows, err := repo.pgConn.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed_to_query_database_for_neighbors: sql_query: %s: %w",
+			sql, err)
+	}
+	defer rows.Close()
+
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
+	}
+
+	return result, nil
+}
+
+func (repo *Repo) UpsertAdmNeighbors(ctx context.Context, n1Id, n2Id string) error {
+	sql, args, err := getUpsertAdmNeighborsSqlQuery(n1Id, n2Id)
+	if err != nil {
+		return fmt.Errorf("failed_to_build_query: %w", err)
+	}
+
+	_, err = repo.pgConn.Exec(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("failed_to_upsert_adm_neighbors: sql_query: %s: %w", sql, err)
+	}
+	return nil
+}
+
+func (repo *Repo) GetLeafAdms(ctx context.Context, startAfterId string, batchSize int) ([]Adm, error) {
+	sql, args, err := getSelectLeafAdmsSqlQuery(startAfterId, batchSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_build_query: %w", err)
+	}
+
+	rows, err := repo.pgConn.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_query_database_for_leaf_adms: sql_query: %s: %w", sql, err)
+	}
+	defer rows.Close()
+
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
+	if err != nil {
+		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
+	}
+
+	return result, nil
+}
+
+func (repo *Repo) IterateLeafAdms(
+	ctx context.Context,
+	batchSize int,
+	fn func(ctx context.Context, batch []Adm) error,
+) error {
+	var startAfterId string
+	for {
+		batch, err := repo.GetLeafAdms(ctx, startAfterId, batchSize)
+		if err != nil {
+			return fmt.Errorf("failed_to_get_leaf_adms_batch: %w", err)
+		}
+		if len(batch) == 0 {
+			return nil
+		}
+
+		if err := fn(ctx, batch); err != nil {
+			return err
+		}
+
+		if len(batch) < batchSize {
+			return nil
+		}
+		startAfterId = batch[len(batch)-1].ID
+	}
+}

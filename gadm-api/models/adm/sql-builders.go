@@ -3,6 +3,8 @@ package adm
 import (
 	"fmt"
 	"gadm-api/utils"
+
+	"github.com/Masterminds/squirrel"
 )
 
 func getAdmNeighborsSqlQuery(admId string) (string, []interface{}, error) {
@@ -119,6 +121,68 @@ func getSelectAdmDirectChildrenForIdSqlQuery(admId string, lv int) (string, []in
 		From("adm").
 		Where(fmt.Sprintf("adm.metadata->>'gid_%d' = $1", lv), admId).
 		Where("adm.lv = $2", lv+1)
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
+
+func getNeighborsSqlQuery(admId string) (string, []interface{}, error) {
+	withClause := `
+		WITH seed AS (
+			SELECT g.geom, g.bbox
+			FROM gadm.adm a
+			JOIN gadm.adm_geometries g ON a.geom_hash = g.geom_hash
+			WHERE a.id = ?
+		)`
+
+	query := psql.
+		Select("adm.metadata", "adm.id", "adm.lv", "adm.geom_hash").
+		Prefix(withClause, admId).
+		From("seed").
+		InnerJoin("gadm.adm_geometries cg ON cg.bbox && seed.bbox AND ST_Touches(cg.geom, seed.geom)").
+		InnerJoin("gadm.adm ON adm.geom_hash = cg.geom_hash").
+		Where("adm.id <> ?", admId).
+		Where("NOT EXISTS (SELECT 1 FROM gadm.adm_tree t WHERE t.parent = adm.id)")
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
+
+func getSelectLeafAdmsSqlQuery(startAfterId string, batchSize int) (string, []interface{}, error) {
+	query := psql.
+		Select("adm.metadata", "adm.id", "adm.lv", "adm.geom_hash").
+		From("adm").
+		LeftJoin("adm_tree atree ON adm.id = atree.parent").
+		Where("atree.parent IS NULL")
+
+	if startAfterId != "" {
+		query = query.Where("adm.id > ?", startAfterId)
+	}
+
+	query = query.OrderBy("adm.id ASC").Limit(uint64(batchSize))
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
+
+func getUpsertAdmNeighborsSqlQuery(n1Id, n2Id string) (string, []interface{}, error) {
+	query := psql.
+		Insert("gadm.adm_neighbors").
+		Columns("n1", "n2").
+		Values(
+			squirrel.Expr("LEAST(?::uuid, ?::uuid)", n1Id, n2Id),
+			squirrel.Expr("GREATEST(?::uuid, ?::uuid)", n1Id, n2Id),
+		).
+		Suffix("ON CONFLICT (n1, n2) DO NOTHING")
 
 	sql, args, err := query.ToSql()
 	if err != nil {
