@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gadm-api/logger"
 	"gadm-api/utils"
 
 	"github.com/jackc/pgx/v5"
@@ -171,6 +172,23 @@ func (repo *Repo) UpsertAdmNeighbors(ctx context.Context, n1Id, n2Id string) err
 	return nil
 }
 
+func (repo *Repo) UpsertAdmNeighborsBatch(ctx context.Context, admId string, neighborIds []string) error {
+	if len(neighborIds) == 0 {
+		return nil
+	}
+
+	sql, args, err := getUpsertAdmNeighborsBatchSqlQuery(admId, neighborIds)
+	if err != nil {
+		return fmt.Errorf("failed_to_build_query: %w", err)
+	}
+
+	_, err = repo.pgConn.Exec(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("failed_to_upsert_adm_neighbors_batch: sql_query: %s: %w", sql, err)
+	}
+	return nil
+}
+
 func (repo *Repo) GetLeafAdms(ctx context.Context, startAfterId string, batchSize int) ([]Adm, error) {
 	sql, args, err := getSelectLeafAdmsSqlQuery(startAfterId, batchSize)
 	if err != nil {
@@ -196,7 +214,8 @@ func (repo *Repo) IterateLeafAdms(
 	batchSize int,
 	fn func(ctx context.Context, batch []Adm) error,
 ) error {
-	var startAfterId string
+	var startAfterId string = "02ad1152-29b6-4be1-9823-3e4a69cc4419"
+	logger.Warning("start_after_id_is_set: %s", startAfterId)
 	for {
 		batch, err := repo.GetLeafAdms(ctx, startAfterId, batchSize)
 		if err != nil {

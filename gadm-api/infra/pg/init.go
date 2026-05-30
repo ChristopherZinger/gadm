@@ -21,6 +21,7 @@ func InitPgPool(poolSize int32) *pgxpool.Pool {
 		logger.Fatal("failed_to_parse_db_url %v", err)
 	}
 	cfg.MaxConns = poolSize
+	cfg.ConnConfig.RuntimeParams["statement_timeout"] = "30000"
 
 	dbPool, err := pgxpool.NewWithConfig(context.Background(), cfg)
 	if err != nil {

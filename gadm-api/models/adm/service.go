@@ -110,7 +110,7 @@ func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
 
 	processBatch := func(ctx context.Context, batch []Adm) error {
 		g, gctx := errgroup.WithContext(ctx)
-		g.SetLimit(5) // keep this low to avoid OOM
+		g.SetLimit(15)
 
 		for _, adm := range batch {
 			g.Go(func() error {
@@ -132,16 +132,20 @@ func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
 
 				logger.Info("neighbors for adm_id=%s: %d", adm.ID, len(neighbors))
 
+				neighborIds := make([]string, 0, len(neighbors))
 				for _, neighbor := range neighbors {
 					if neighbor.ID == adm.ID {
 						continue
 					}
-					if err := service.repo.UpsertAdmNeighbors(gctx, adm.ID, neighbor.ID); err != nil {
-						return fmt.Errorf(
-							"failed_to_upsert_neighbors: adm_id=%s neighbor_id=%s: %w",
-							adm.ID, neighbor.ID, err)
-					}
+					neighborIds = append(neighborIds, neighbor.ID)
 				}
+
+				if err := service.repo.UpsertAdmNeighborsBatch(gctx, adm.ID, neighborIds); err != nil {
+					return fmt.Errorf(
+						"failed_to_upsert_neighbors_batch: adm_id=%s: %w",
+						adm.ID, err)
+				}
+
 				processedCount++
 				return nil
 			})

@@ -144,7 +144,7 @@ func getNeighborsSqlQuery(admId string) (string, []interface{}, error) {
 		From("seed").
 		InnerJoin("gadm.adm_geometries cg ON cg.bbox && seed.bbox AND ST_Touches(cg.geom, seed.geom)").
 		InnerJoin("gadm.adm ON adm.geom_hash = cg.geom_hash").
-		Where("adm.id <> ?", admId).
+		Where("adm.id > ?", admId).
 		Where("NOT EXISTS (SELECT 1 FROM gadm.adm_tree t WHERE t.parent = adm.id)")
 
 	sql, args, err := query.ToSql()
@@ -183,6 +183,30 @@ func getUpsertAdmNeighborsSqlQuery(n1Id, n2Id string) (string, []interface{}, er
 			squirrel.Expr("GREATEST(?::uuid, ?::uuid)", n1Id, n2Id),
 		).
 		Suffix("ON CONFLICT (n1, n2) DO NOTHING")
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return "", nil, err
+	}
+	return sql, args, nil
+}
+
+func getUpsertAdmNeighborsBatchSqlQuery(admId string, neighborIds []string) (string, []interface{}, error) {
+	if len(neighborIds) == 0 {
+		return "", nil, nil
+	}
+
+	query := psql.
+		Insert("gadm.adm_neighbors").
+		Columns("n1", "n2").
+		Suffix("ON CONFLICT (n1, n2) DO NOTHING")
+
+	for _, neighborId := range neighborIds {
+		query = query.Values(
+			squirrel.Expr("LEAST(?::uuid, ?::uuid)", admId, neighborId),
+			squirrel.Expr("GREATEST(?::uuid, ?::uuid)", admId, neighborId),
+		)
+	}
 
 	sql, args, err := query.ToSql()
 	if err != nil {
