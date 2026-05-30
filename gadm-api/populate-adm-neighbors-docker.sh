@@ -7,4 +7,4 @@ cd "${SCRIPT_DIR}/.."
 exec docker compose run --rm --build \
   -e SERVICE_TYPE=cron_job \
   -e CRON_JOB_NAME=populate_adm_neighbors \
-  gadm-api | tee pop-neighbors.log
+  gadm-api 
