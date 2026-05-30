@@ -11,6 +11,24 @@ services:
       - "5432:5432"
     volumes:
       - gadm_db_data:/var/lib/postgresql/data
+    shm_size: 1g
+    mem_limit: 6g
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=2GB"
+      - "-c"
+      - "effective_cache_size=4GB"
+      - "-c"
+      - "work_mem=32MB"
+      - "-c"
+      - "maintenance_work_mem=512MB"
+      - "-c"
+      - "statement_timeout=60000"
+      - "-c"
+      - "log_min_duration_statement=5000"
+      - "-c"
+      - "log_temp_files=0"
     restart: unless-stopped
 
   gadm-migrations:
