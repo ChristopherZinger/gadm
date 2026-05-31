@@ -48,7 +48,7 @@ func (service *Service) GetAdmNeighborsForPoint(ctx context.Context, point utils
 
 func (service *Service) PopulateAdmTree(ctx context.Context) error {
 	startAfterId := ""
-	batchSize := 1000
+	batchSize := 20
 	processedCount := 0
 
 	for {
@@ -61,7 +61,7 @@ func (service *Service) PopulateAdmTree(ctx context.Context) error {
 		}
 
 		g, gctx := errgroup.WithContext(ctx)
-		g.SetLimit(45) // no more than total postgres connections in pool
+		g.SetLimit(20)
 
 		for _, adm := range adms {
 			g.Go(func() error {
@@ -85,6 +85,8 @@ func (service *Service) PopulateAdmTree(ctx context.Context) error {
 				return nil
 			})
 		}
+
+		utils.Sleep(gctx, 2*time.Minute)
 
 		if err := g.Wait(); err != nil {
 			return err
