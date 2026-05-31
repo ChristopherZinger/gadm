@@ -214,7 +214,7 @@ func (repo *Repo) IterateLeafAdms(
 	batchSize int,
 	fn func(ctx context.Context, batch []Adm) error,
 ) error {
-	var startAfterId string = "02ad1152-29b6-4be1-9823-3e4a69cc4419"
+	var startAfterId string = "2000257c-6950-4b02-a045-085f32692880"
 	logger.Warning("start_after_id_is_set: %s", startAfterId)
 	for {
 		batch, err := repo.GetLeafAdms(ctx, startAfterId, batchSize)
