@@ -6,6 +6,7 @@ import (
 	"os"
 
 	db "gadm-api/db"
+	gameloop "gadm-api/game-loop"
 	handlers "gadm-api/handlers"
 	"gadm-api/infra/pg"
 	"gadm-api/jobs"
@@ -36,6 +37,8 @@ func main() {
 		default:
 			logger.Fatal("unknown_cron_job_name %s", jobName)
 		}
+	case "game_loop":
+		gameloop.GameLoop()
 	default:
 		logger.Fatal("invalid_api_type %s", os.Getenv("API_TYPE"))
 	}
