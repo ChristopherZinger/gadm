@@ -156,7 +156,7 @@ func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
 		}
 
 		logger.Info("wait 2 min")
-		utils.Sleep(gctx, 2*time.Minute)
+		time.Sleep(1 * time.Minute)
 
 		lastId := batch[len(batch)-1].ID
 		logger.Info("populate_adm_neighbors_progress processed=%d last_id=%s", processedCount, lastId)
