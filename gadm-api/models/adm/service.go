@@ -86,8 +86,6 @@ func (service *Service) PopulateAdmTree(ctx context.Context) error {
 			})
 		}
 
-		utils.Sleep(gctx, 2*time.Minute)
-
 		if err := g.Wait(); err != nil {
 			return err
 		}
@@ -107,12 +105,12 @@ func (service *Service) PopulateAdmTree(ctx context.Context) error {
 }
 
 func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
-	batchSize := 100
+	batchSize := 50
 	processedCount := 0
 
 	processBatch := func(ctx context.Context, batch []Adm) error {
 		g, gctx := errgroup.WithContext(ctx)
-		g.SetLimit(2)
+		g.SetLimit(5)
 
 		for _, adm := range batch {
 			g.Go(func() error {
@@ -156,6 +154,9 @@ func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
 		if err := g.Wait(); err != nil {
 			return err
 		}
+
+		logger.Info("wait 2 min")
+		utils.Sleep(gctx, 2*time.Minute)
 
 		lastId := batch[len(batch)-1].ID
 		logger.Info("populate_adm_neighbors_progress processed=%d last_id=%s", processedCount, lastId)
