@@ -105,7 +105,7 @@ func (service *Service) PopulateAdmTree(ctx context.Context) error {
 }
 
 func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
-	batchSize := 50
+	batchSize := 200
 	processedCount := 0
 
 	processBatch := func(ctx context.Context, batch []Adm) error {
@@ -155,7 +155,7 @@ func (service *Service) PopulateAdmNeighbors(ctx context.Context) error {
 			return err
 		}
 
-		logger.Info("wait 2 min")
+		logger.Info("wait 1 min")
 		time.Sleep(1 * time.Minute)
 
 		lastId := batch[len(batch)-1].ID
