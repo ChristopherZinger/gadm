@@ -1,10 +1,11 @@
 package adm
 
 type admQueryOpts struct {
-	lv            *int
-	startAfterFid *string
-	startAfterId  *string
-	batchSize     int
+	lv              *int
+	startAfterFid   *string
+	startAfterId    *string
+	batchSize       int
+	includeGeometry bool
 }
 
 type admQueryOptsBuilder struct {
@@ -13,7 +14,8 @@ type admQueryOptsBuilder struct {
 
 func NewAdmQueryOptsBuilder() *admQueryOptsBuilder {
 	return &admQueryOptsBuilder{conf: admQueryOpts{
-		batchSize: 100,
+		batchSize:       100,
+		includeGeometry: false,
 	}}
 }
 

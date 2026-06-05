@@ -20,6 +20,9 @@ type Adm struct {
 	ID       string          `db:"id" json:"id"`
 	Level    int             `db:"lv" json:"lv"`
 	GeomHash string          `db:"geom_hash" json:"geom_hash"`
+
+	Geom json.RawMessage `db:"geom" json:"geom,omitempty"`
+	Bbox json.RawMessage `db:"bbox" json:"bbox,omitempty"`
 }
 
 type Repo struct {
@@ -44,9 +47,9 @@ func (repo *Repo) GetAdmNeighbors(ctx context.Context, admId string) ([]Adm, err
 	}
 	defer rows.Close()
 
-	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Adm])
 	if err != nil {
-		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
+		return nil, fmt.Errorf("failed_to_collect_adm_rows: %w", err)
 	}
 
 	return result, nil
@@ -96,7 +99,7 @@ func (repo *Repo) GetAdmsDirectChildrenForId(ctx context.Context, admId string, 
 	}
 	defer rows.Close()
 
-	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Adm])
 	if err != nil {
 		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
 	}
@@ -129,7 +132,7 @@ func (repo *Repo) GetAdms(ctx context.Context, options admQueryOpts) ([]Adm, err
 	}
 	defer rows.Close()
 
-	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Adm])
 	if err != nil {
 		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
 	}
@@ -151,7 +154,7 @@ func (repo *Repo) GetNeighbors(ctx context.Context, admId string) ([]Adm, error)
 	}
 	defer rows.Close()
 
-	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Adm])
 	if err != nil {
 		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
 	}
@@ -201,7 +204,7 @@ func (repo *Repo) GetLeafAdms(ctx context.Context, startAfterId string, batchSiz
 	}
 	defer rows.Close()
 
-	result, err := pgx.CollectRows(rows, pgx.RowToStructByName[Adm])
+	result, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Adm])
 	if err != nil {
 		return nil, fmt.Errorf("failed_to_collect_rows: %w", err)
 	}

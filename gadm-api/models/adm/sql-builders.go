@@ -78,8 +78,16 @@ func getSelectOneAdmByIdSqlQuery(admId string) (string, []interface{}, error) {
 }
 
 func getSelectAdmsSqlQuery(options admQueryOpts) (string, []interface{}, error) {
+	fields := []string{"adm.metadata", "adm.id", "adm.lv", "adm.geom_hash"}
+	if options.includeGeometry {
+		fields = append(
+			fields,
+			"ST_AsGeoJSON(g.geom, 6) as geom",
+			"ST_AsGeoJSON(g.bbox, 6) as bbox",
+		)
+	}
 	query := psql.
-		Select("adm.metadata", "adm.id", "adm.lv", "adm.geom_hash").
+		Select(fields...).
 		From("adm")
 
 	if options.startAfterId != nil {
@@ -93,6 +101,10 @@ func getSelectAdmsSqlQuery(options admQueryOpts) (string, []interface{}, error) 
 		} else {
 			query = query.Where("adm.lv = $1", *options.lv)
 		}
+	}
+
+	if options.includeGeometry {
+		query = query.Join("adm.adm_geometries g on adm.geom_hash = g.geom_hash")
 	}
 
 	if options.startAfterFid != nil {
