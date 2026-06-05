@@ -2,6 +2,7 @@ package adm
 
 import (
 	"fmt"
+	"gadm-api/logger"
 	"gadm-api/utils"
 
 	"github.com/Masterminds/squirrel"
@@ -76,16 +77,30 @@ func getSelectOneAdmByIdSqlQuery(admId string) (string, []interface{}, error) {
 	return sql, args, nil
 }
 
-func getSelectAdmsSqlQuery(startAfterId string, batchSize int) (string, []interface{}, error) {
+func getSelectAdmsSqlQuery(options admQueryOpts) (string, []interface{}, error) {
 	query := psql.
 		Select("adm.metadata", "adm.id", "adm.lv", "adm.geom_hash").
 		From("adm")
 
-	if startAfterId != "" {
-		query = query.Where("adm.id > $1", startAfterId)
+	if options.startAfterId != nil {
+		query = query.Where("adm.id > $1", *options.startAfterId)
+		query = query.OrderBy("adm.id")
 	}
 
-	query = query.OrderBy("adm.id").OrderBy("adm.id").Limit(uint64(batchSize))
+	if options.lv != nil {
+		if *options.lv < 0 || *options.lv > 5 {
+			logger.Error("invalid_lv_when_building_adm_query: %d", *options.lv)
+		} else {
+			query = query.Where("adm.lv = $1", *options.lv)
+		}
+	}
+
+	if options.startAfterFid != nil {
+		query = query.Where(squirrel.Gt{"adm.metadata ->> 'fid'": *options.startAfterFid})
+		query = query.OrderBy("adm.metadata ->> 'fid'")
+	}
+
+	query = query.Limit(uint64(options.batchSize))
 
 	sql, args, err := query.ToSql()
 	if err != nil {

@@ -117,8 +117,8 @@ func (repo *Repo) UpsertAdmTreeRelationships(ctx context.Context, parentId strin
 	return nil
 }
 
-func (repo *Repo) GetAdms(ctx context.Context, startAfterId string, batchSize int) ([]Adm, error) {
-	sql, args, err := getSelectAdmsSqlQuery(startAfterId, batchSize)
+func (repo *Repo) GetAdms(ctx context.Context, options admQueryOpts) ([]Adm, error) {
+	sql, args, err := getSelectAdmsSqlQuery(options)
 	if err != nil {
 		return nil, fmt.Errorf("failed_to_build_query: %w", err)
 	}

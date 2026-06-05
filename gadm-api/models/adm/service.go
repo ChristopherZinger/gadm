@@ -52,7 +52,12 @@ func (service *Service) PopulateAdmTree(ctx context.Context) error {
 	processedCount := 0
 
 	for {
-		adms, err := service.repo.GetAdms(ctx, startAfterId, batchSize)
+		options, err := NewAdmQueryOptsBuilder().SetStartAfterId(startAfterId).Build()
+		if err != nil {
+			return fmt.Errorf("failed_to_build_query_options: %w", err)
+		}
+
+		adms, err := service.repo.GetAdms(ctx, options)
 		if err != nil {
 			return fmt.Errorf("fetch_adms_batch_after: start_after_id=%q: %w", startAfterId, err)
 		}
