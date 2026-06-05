@@ -104,7 +104,7 @@ func getSelectAdmsSqlQuery(options admQueryOpts) (string, []interface{}, error) 
 	}
 
 	if options.includeGeometry {
-		query = query.Join("adm.adm_geometries g on adm.geom_hash = g.geom_hash")
+		query = query.Join("adm_geometries g on adm.geom_hash = g.geom_hash")
 	}
 
 	if options.startAfterFid != nil {

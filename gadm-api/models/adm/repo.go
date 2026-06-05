@@ -128,7 +128,7 @@ func (repo *Repo) GetAdms(ctx context.Context, options admQueryOpts) ([]Adm, err
 
 	rows, err := repo.pgConn.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed_to_query_database_for_adm_tree_relationships: sql_query: %s: %w", sql, err)
+		return nil, fmt.Errorf("failed_to_query_database_for_adm: sql_query: %s: %w", sql, err)
 	}
 	defer rows.Close()
 

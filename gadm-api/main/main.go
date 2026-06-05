@@ -77,6 +77,8 @@ func startRestApi() {
 	mux.HandleFunc("/api/v1/adm-neighbors", admHandler.AdmNeighborsHandler)
 	mux.HandleFunc("/api/v1/reverse-geocode", admHandler.AdmForLatLngHandler)
 
+	mux.HandleFunc("/api/v1/fc-test", admHandler.GetAdmFeatureCollectionHandler)
+
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
 
 	logger.Info("server_starting_on_port_8080")

@@ -7,6 +7,7 @@ import (
 	"gadm-api/utils"
 	"time"
 
+	geojson "github.com/paulmach/go.geojson"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -32,6 +33,14 @@ func (service *Service) GetAdmForPoint(ctx context.Context, point utils.Point) (
 		return Adm{}, err
 	}
 	return result, nil
+}
+
+func (service *Service) GetAdmsFc(ctx context.Context, options admQueryOpts) (*geojson.FeatureCollection, error) {
+	adms, err := service.repo.GetAdms(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	return convertAdmsToFeatureCollection(adms)
 }
 
 func (service *Service) GetAdmNeighborsForPoint(ctx context.Context, point utils.Point) ([]Adm, error) {

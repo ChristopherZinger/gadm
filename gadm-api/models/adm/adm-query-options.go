@@ -42,3 +42,8 @@ func (builder *admQueryOptsBuilder) SetBatchSize(batchSize int) *admQueryOptsBui
 func (builder *admQueryOptsBuilder) Build() (admQueryOpts, error) {
 	return builder.conf, nil
 }
+
+func (builder *admQueryOptsBuilder) SetIncludeGeometry(includeGeometry bool) *admQueryOptsBuilder {
+	builder.conf.includeGeometry = includeGeometry
+	return builder
+}
