@@ -75,33 +75,6 @@ func GetGadmFeatureSelectBuilder(
 	return featureQuery
 }
 
-type GadmFeatureCollectionSelectBuilderParams struct {
-	GadmLevel     gadmUtils.GadmLevel
-	FilterValue   string
-	FilterColName string
-	StartAtFid    int
-	PageSize      int
-}
-
-func BuildGadmFeatureCollectionSelectBuilder(
-	params GadmFeatureCollectionSelectBuilderParams,
-) squirrel.SelectBuilder {
-	gadmFeatureQuery := GetGadmFeatureSelectBuilder(
-		params.GadmLevel,
-		params.FilterValue,
-		params.FilterColName,
-		params.StartAtFid,
-		params.PageSize)
-
-	result := psql.Select(
-		`json_build_object(
-			'type', 'FeatureCollection',
-			'features', json_agg(geojson))`,
-	).FromSelect(gadmFeatureQuery, "features")
-
-	return result
-}
-
 func BuildGeojsonFeatureSqlQuery(
 	lv gadmUtils.GadmLevel,
 	gidFilterValue string,
@@ -206,4 +179,3 @@ func GetInsertAccessTokenWithReturningSqlQuery(email string) (string, []interfac
 	return sql, args, nil
 
 }
-

@@ -61,14 +61,6 @@ func startRestApi() {
 		mux.HandleFunc(handlerInfo.Url, handlerInfo.Handler)
 	}
 
-	featureCollectionHandlers, err := handlers.CreateFeatureCollectionHandlers(pgConn)
-	if err != nil {
-		logger.Fatal("failed_to_create_feature_collection_handlers %v", err)
-	}
-	for _, handlerInfo := range featureCollectionHandlers {
-		mux.HandleFunc(handlerInfo.Url, handlerInfo.Handler)
-	}
-
 	createAccessTokenHandlerInfo := handlers.GetAccessTokenCreationHandlerInfo(pgConn)
 	mux.HandleFunc(createAccessTokenHandlerInfo.Url, createAccessTokenHandlerInfo.Handler)
 

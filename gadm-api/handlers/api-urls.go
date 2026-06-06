@@ -53,10 +53,6 @@ func getApiUrl(endpointType EndpointType, gadmLevel gadmUtils.GadmLevel, queryPa
 	return u.String()
 }
 
-func getFeatureCollectionUrl(gadmLevel gadmUtils.GadmLevel, queryParams ...QueryParam) string {
-	return getApiUrl(featureCollectionEndpoint, gadmLevel, queryParams...)
-}
-
 func getGeojsonlUrl(gadmLevel gadmUtils.GadmLevel, queryParams ...QueryParam) string {
 	return getApiUrl(geojsonlEndpoint, gadmLevel, queryParams...)
 }
