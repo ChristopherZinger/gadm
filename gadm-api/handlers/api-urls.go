@@ -41,7 +41,7 @@ func getBaseApiUrl() *url.URL {
 
 func getApiUrl(endpointType EndpointType, gadmLevel gadmUtils.GadmLevel, queryParams ...QueryParam) string {
 	u := &url.URL{
-		Path: fmt.Sprintf("%s%s/lv%d", getBaseApiUrl().Path, endpointType, gadmLevel),
+		Path: fmt.Sprintf("/%s/lv%d", endpointType, gadmLevel),
 	}
 
 	q := u.Query()

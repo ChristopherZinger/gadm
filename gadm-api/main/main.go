@@ -5,15 +5,17 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 
 	db "gadm-api/db"
 	gameloop "gadm-api/game-loop"
-	handlers "gadm-api/handlers"
+	"gadm-api/handlers"
 	"gadm-api/infra/pg"
 	"gadm-api/jobs"
 	"gadm-api/logger"
 	"gadm-api/models/adm"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
@@ -53,6 +55,23 @@ func startRestApi() {
 	pgConn := db.CreatePgConnector(dbPool)
 	mux := http.NewServeMux()
 
+	baseApiPath := "/api/v1"
+	mux.Handle(baseApiPath+"/", http.StripPrefix(
+		baseApiPath,
+		getApiHandlers(pgConn, dbPool, baseApiPath),
+	))
+
+	mux.Handle("/ws", http.HandlerFunc(getWebsocketHandler))
+
+	handler := LoggingMiddleware(mux)
+
+	logger.Info("server_starting_on_port_8080")
+	log.Fatal(http.ListenAndServe(":8080", handler))
+}
+
+func getApiHandlers(pgConn *db.PgConn, dbPool *pgxpool.Pool, baseApiPath string) http.Handler {
+	mux := http.NewServeMux()
+
 	geojsonlHandlers, err := handlers.CreateGeojsonlHandlers(pgConn)
 	if err != nil {
 		logger.Fatal("failed_to_create_geojsonl_handlers %v", err)
@@ -67,19 +86,18 @@ func startRestApi() {
 	admRepo := adm.NewAdmRepo(dbPool)
 	admService := adm.NewAdmService(admRepo)
 	admHandler := adm.NewAdmNeighborsHandler(admService)
-	mux.HandleFunc("/api/v1/adm-neighbors", admHandler.AdmNeighborsHandler)
-	mux.HandleFunc("/api/v1/reverse-geocode", admHandler.AdmForLatLngHandler)
+	mux.HandleFunc("/adm-neighbors", admHandler.AdmNeighborsHandler)
+	mux.HandleFunc("/reverse-geocode", admHandler.AdmForLatLngHandler)
 
-	fcBaseUrl := url.URL{Path: "/api/v1/fc"}
+	fcPath := "/fc"
+	fcBaseUrl := url.URL{Path: path.Join(baseApiPath, fcPath)}
 	mux.HandleFunc(
-		fcBaseUrl.String(),
+		fcPath,
 		func(w http.ResponseWriter, r *http.Request) {
 			admHandler.GetAdmFeatureCollectionHandler(w, r, fcBaseUrl)
 		},
 	)
 
-	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
-
-	logger.Info("server_starting_on_port_8080")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	handler := GetAuthMiddleWare(pgConn)(mux)
+	return handler
 }
