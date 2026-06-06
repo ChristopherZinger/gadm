@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"gadm-api/logger"
 	"gadm-api/utils"
@@ -114,42 +116,78 @@ func getPointFromRequestBody(r *http.Request) (utils.Point, error) {
 	return utils.NewPointLngLat(geometry.Point[0], geometry.Point[1]), nil
 }
 
-func (handler *Handler) GetAdmFeatureCollectionHandler(w http.ResponseWriter, r *http.Request) {
-	startAfterId := r.URL.Query().Get("start-after-id")
-	startAfterFid := r.URL.Query().Get("start-after-fid")
-	batchSize := r.URL.Query().Get("batch-size")
-	lv := r.URL.Query().Get("lv")
+func (handler *Handler) validateAdmFcQueryParams(urlQuery url.Values) (admQueryOpts, error) {
+	startAfterId := urlQuery.Get("start-after-id")
+	startAfterFid := urlQuery.Get("start-after-fid")
+	batchSize := urlQuery.Get("batch-size")
+	lvString := urlQuery.Get("lv")
+
+	getLvInt := func(lv string) (int, error) {
+		_lv, err := strconv.Atoi(lv)
+		if err != nil {
+			return 0, fmt.Errorf("failed_int_conversion %v", err)
+		}
+		if _lv < 0 || _lv > 5 {
+			return 0, fmt.Errorf("range_error %v", err)
+		}
+		return _lv, nil
+	}
+	var _lv *int
+	if lvString != "" {
+		__lv, err := getLvInt(lvString)
+		if err != nil {
+			return admQueryOpts{}, fmt.Errorf("failed_parsing_query_param_lv: %v", err)
+		}
+		_lv = &__lv
+	}
+
+	var _batchSize int
+	getBatchSizeForLv := func(lv int) int {
+		if lv < 2 {
+			return utils.Clamp(lv, 1, 5)
+		}
+		if lv == 4 {
+			return utils.Clamp(lv, 1, 20)
+		}
+		return utils.Clamp(lv, 1, 50)
+	}
+	if batchSize != "" {
+		_batchSize, err := strconv.Atoi(batchSize)
+		if err != nil {
+			return admQueryOpts{}, fmt.Errorf("failed_int_conversion batch_size %v", err)
+		}
+		if _lv != nil {
+			_batchSize = getBatchSizeForLv(*_lv)
+		} else {
+			_batchSize = utils.Clamp(_batchSize, 1, 20)
+		}
+	}
 
 	optsBuilder := NewAdmQueryOptsBuilder()
-
+	optsBuilder.SetBatchSize(_batchSize)
+	optsBuilder.SetIncludeGeometry(true)
+	if _lv != nil {
+		optsBuilder.SetLv(*_lv)
+	}
 	if startAfterId != "" {
 		optsBuilder.SetStartAfterId(startAfterId)
 	}
 	if startAfterFid != "" {
 		optsBuilder.SetStartAfterFid(startAfterFid)
 	}
-	if batchSize != "" {
-		_batchSize, err := strconv.Atoi(batchSize)
-		if err != nil {
-			logger.Error("failed_to_convert_lv_to_int %v", err)
-			http.Error(w, "invalid_request", http.StatusBadRequest)
-			return
-		}
-		optsBuilder.SetBatchSize(_batchSize)
-	}
-	if lv != "" {
-		_lv, err := strconv.Atoi(lv)
-		if err != nil {
-			logger.Error("failed_to_convert_lv_to_int %v", err)
-			http.Error(w, "invalid_request", http.StatusBadRequest)
-			return
-		}
-		optsBuilder.SetLv(_lv)
-	}
-	optsBuilder.SetIncludeGeometry(true)
+
 	opts, err := optsBuilder.Build()
 	if err != nil {
-		logger.Error("failed_to_build_adm_query_opts %v", err)
+		return admQueryOpts{}, fmt.Errorf("failed_to_build_adm_query_opts %v", err)
+	}
+	return opts, nil
+}
+
+func (handler *Handler) GetAdmFeatureCollectionHandler(w http.ResponseWriter, r *http.Request) {
+
+	opts, err := handler.validateAdmFcQueryParams(r.URL.Query())
+	if err != nil {
+		logger.Error("failed_to_validate_adm_fc_query_params %v", err)
 		http.Error(w, "invalid_request", http.StatusBadRequest)
 		return
 	}
