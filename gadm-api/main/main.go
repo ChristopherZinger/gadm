@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
 	db "gadm-api/db"
@@ -77,7 +78,13 @@ func startRestApi() {
 	mux.HandleFunc("/api/v1/adm-neighbors", admHandler.AdmNeighborsHandler)
 	mux.HandleFunc("/api/v1/reverse-geocode", admHandler.AdmForLatLngHandler)
 
-	mux.HandleFunc("/api/v1/fc-test", admHandler.GetAdmFeatureCollectionHandler)
+	fcBaseUrl := url.URL{Path: "/api/v1/fc"}
+	mux.HandleFunc(
+		fcBaseUrl.String(),
+		func(w http.ResponseWriter, r *http.Request) {
+			admHandler.GetAdmFeatureCollectionHandler(w, r, fcBaseUrl)
+		},
+	)
 
 	handler := GetAuthMiddleWare(pgConn)(LoggingMiddleware(mux))
 

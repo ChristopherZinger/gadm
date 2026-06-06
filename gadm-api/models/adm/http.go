@@ -184,8 +184,7 @@ func (handler *Handler) validateAdmFcQueryParams(urlQuery url.Values) (admQueryO
 	return opts, nil
 }
 
-func (handler *Handler) GetAdmFeatureCollectionHandler(w http.ResponseWriter, r *http.Request) {
-
+func (handler *Handler) GetAdmFeatureCollectionHandler(w http.ResponseWriter, r *http.Request, baseUrl url.URL) {
 	opts, err := handler.validateAdmFcQueryParams(r.URL.Query())
 	if err != nil {
 		logger.Error("failed_to_validate_adm_fc_query_params %v", err)
@@ -200,7 +199,35 @@ func (handler *Handler) GetAdmFeatureCollectionHandler(w http.ResponseWriter, r 
 		return
 	}
 
+	lastAdm := result.Features[len(result.Features)-1]
+	nextUrl := getAdmsNextUrl(baseUrl, lastAdm, opts)
+	if nextUrl != "" {
+		w.Header().Set("Link", fmt.Sprintf("<%s>; rel=\"next\"", nextUrl))
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
+}
+
+func getAdmsNextUrl(baseUrl url.URL, lastAdm *geojson.Feature, opts admQueryOpts) string {
+	if lastAdm == nil {
+		return ""
+	}
+
+	lastAdmId := lastAdm.ID
+	lastAdmFid := lastAdm.Properties["fid"]
+	query := baseUrl.Query()
+	if opts.startAfterId != nil {
+		query.Set("start-after-id", lastAdmId.(string))
+	}
+	if opts.startAfterFid != nil {
+		query.Set("start-after-fid", lastAdmFid.(string))
+	}
+	if opts.lv != nil {
+		query.Set("lv", fmt.Sprintf("%d", *opts.lv))
+	}
+	query.Set("batch-size", fmt.Sprintf("%d", opts.batchSize))
+	baseUrl.RawQuery = query.Encode()
+
+	return baseUrl.String()
 }
