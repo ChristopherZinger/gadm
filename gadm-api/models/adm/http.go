@@ -142,22 +142,23 @@ func (handler *Handler) validateAdmFcQueryParams(urlQuery url.Values) (admQueryO
 	}
 
 	var _batchSize int
-	getBatchSizeForLv := func(lv int) int {
+	var err error
+	getBatchSizeForLv := func(lv int, batchSize int) int {
 		if lv < 2 {
-			return utils.Clamp(lv, 1, 5)
+			return utils.Clamp(batchSize, 1, 5)
 		}
-		if lv == 4 {
-			return utils.Clamp(lv, 1, 20)
+		if lv < 4 {
+			return utils.Clamp(batchSize, 1, 20)
 		}
-		return utils.Clamp(lv, 1, 50)
+		return utils.Clamp(batchSize, 1, 50)
 	}
 	if batchSize != "" {
-		_batchSize, err := strconv.Atoi(batchSize)
+		_batchSize, err = strconv.Atoi(batchSize)
 		if err != nil {
 			return admQueryOpts{}, fmt.Errorf("failed_int_conversion batch_size %v", err)
 		}
 		if _lv != nil {
-			_batchSize = getBatchSizeForLv(*_lv)
+			_batchSize = getBatchSizeForLv(*_lv, _batchSize)
 		} else {
 			_batchSize = utils.Clamp(_batchSize, 1, 20)
 		}
