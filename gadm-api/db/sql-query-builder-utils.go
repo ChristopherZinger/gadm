@@ -83,7 +83,6 @@ func BuildGeojsonFeatureSqlQuery(
 	limit int,
 ) (string, []interface{}, error) {
 	gadmFeatureSelectBuilder := GetGadmFeatureSelectBuilder(
-
 		lv,
 		gidFilterValue,
 		filterColName,
