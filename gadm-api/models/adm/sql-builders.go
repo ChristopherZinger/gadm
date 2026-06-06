@@ -91,7 +91,7 @@ func getSelectAdmsSqlQuery(options admQueryOpts) (string, []interface{}, error) 
 		From("adm")
 
 	if options.startAfterId != nil {
-		query = query.Where("adm.id > $1", *options.startAfterId)
+		query = query.Where("adm.id > ?", *options.startAfterId)
 		query = query.OrderBy("adm.id")
 	}
 
@@ -99,7 +99,7 @@ func getSelectAdmsSqlQuery(options admQueryOpts) (string, []interface{}, error) 
 		if *options.lv < 0 || *options.lv > 5 {
 			logger.Error("invalid_lv_when_building_adm_query: %d", *options.lv)
 		} else {
-			query = query.Where("adm.lv = $1", *options.lv)
+			query = query.Where("adm.lv = ?", *options.lv)
 		}
 	}
 
