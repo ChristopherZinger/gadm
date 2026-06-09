@@ -112,7 +112,9 @@ func getSelectAdmsSqlQuery(options admQueryOpts) (string, []interface{}, error) 
 		query = query.OrderBy("adm.metadata ->> 'fid'")
 	}
 
-	query = query.Limit(uint64(options.batchSize))
+	if options.batchSize != nil {
+		query = query.Limit(uint64(*options.batchSize))
+	}
 
 	sql, args, err := query.ToSql()
 	if err != nil {

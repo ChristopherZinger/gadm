@@ -4,7 +4,7 @@ type admQueryOpts struct {
 	lv              *int
 	startAfterFid   *string
 	startAfterId    *string
-	batchSize       int
+	batchSize       *int
 	includeGeometry bool
 }
 
@@ -13,8 +13,9 @@ type admQueryOptsBuilder struct {
 }
 
 func NewAdmQueryOptsBuilder() *admQueryOptsBuilder {
+	batchSize := 100
 	return &admQueryOptsBuilder{conf: admQueryOpts{
-		batchSize:       100,
+		batchSize:       &batchSize,
 		includeGeometry: false,
 	}}
 }
@@ -34,7 +35,7 @@ func (builder *admQueryOptsBuilder) SetStartAfterFid(startAfterFid string) *admQ
 	return builder
 }
 
-func (builder *admQueryOptsBuilder) SetBatchSize(batchSize int) *admQueryOptsBuilder {
+func (builder *admQueryOptsBuilder) SetBatchSize(batchSize *int) *admQueryOptsBuilder {
 	builder.conf.batchSize = batchSize
 	return builder
 }

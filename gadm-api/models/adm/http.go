@@ -165,7 +165,7 @@ func (handler *Handler) validateAdmFcQueryParams(urlQuery url.Values) (admQueryO
 	}
 
 	optsBuilder := NewAdmQueryOptsBuilder()
-	optsBuilder.SetBatchSize(_batchSize)
+	optsBuilder.SetBatchSize(&_batchSize)
 	optsBuilder.SetIncludeGeometry(true)
 	if _lv != nil {
 		optsBuilder.SetLv(*_lv)
