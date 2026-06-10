@@ -261,6 +261,10 @@ func (handler *Handler) AdmGeojsonlHandler(w http.ResponseWriter, r *http.Reques
 		}
 	}()
 
+	w.Header().Set("Content-Type", "application/x-ndjson")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
 	for admJson := range ch {
 		err := flusher.flush(admJson)
 		if err != nil {
