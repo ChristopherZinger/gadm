@@ -1,11 +1,8 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
-
-	gadmUtils "gadm-api/utils"
 )
 
 type HandlerInfo struct {
@@ -13,46 +10,9 @@ type HandlerInfo struct {
 	Handler func(w http.ResponseWriter, r *http.Request)
 }
 
-type EndpointType string
-
-const (
-	featureCollectionEndpoint EndpointType = "fc"
-	geojsonlEndpoint          EndpointType = "geojsonl"
-)
-
-type PaginationParamKeys string
-
-const (
-	PAGE_SIZE_QUERY_KEY PaginationParamKeys = "page-size"
-	START_AT_QUERY_KEY  PaginationParamKeys = "start-at"
-)
-
-type QueryParam struct {
-	Key   string
-	Value string
-}
-
 func getBaseApiUrl() *url.URL {
 	u := &url.URL{
 		Path: "/api/v1/",
 	}
 	return u
-}
-
-func getApiUrl(endpointType EndpointType, gadmLevel gadmUtils.GadmLevel, queryParams ...QueryParam) string {
-	u := &url.URL{
-		Path: fmt.Sprintf("/%s/lv%d", endpointType, gadmLevel),
-	}
-
-	q := u.Query()
-	for _, param := range queryParams {
-		q.Set(param.Key, param.Value)
-	}
-
-	u.RawQuery = q.Encode()
-	return u.String()
-}
-
-func getGeojsonlUrl(gadmLevel gadmUtils.GadmLevel, queryParams ...QueryParam) string {
-	return getApiUrl(geojsonlEndpoint, gadmLevel, queryParams...)
 }

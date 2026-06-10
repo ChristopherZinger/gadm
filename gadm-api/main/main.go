@@ -72,14 +72,6 @@ func startRestApi() {
 func getApiHandlers(pgConn *db.PgConn, dbPool *pgxpool.Pool, baseApiPath string) http.Handler {
 	mux := http.NewServeMux()
 
-	geojsonlHandlers, err := handlers.CreateGeojsonlHandlers(pgConn)
-	if err != nil {
-		logger.Fatal("failed_to_create_geojsonl_handlers %v", err)
-	}
-	for _, handlerInfo := range geojsonlHandlers {
-		mux.HandleFunc(handlerInfo.Url, handlerInfo.Handler)
-	}
-
 	createAccessTokenHandlerInfo := handlers.GetAccessTokenCreationHandlerInfo(pgConn)
 	mux.HandleFunc(createAccessTokenHandlerInfo.Url, createAccessTokenHandlerInfo.Handler)
 
