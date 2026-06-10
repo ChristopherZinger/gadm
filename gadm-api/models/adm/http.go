@@ -136,7 +136,7 @@ func getBatchSizeIntFromString(batchSize string) (*int, error) {
 	}
 	_batchSize, err := strconv.Atoi(batchSize)
 	if err != nil {
-		return &_batchSize, fmt.Errorf("failed_converting_batch_size_to_int %v", err)
+		return nil, fmt.Errorf("failed_converting_batch_size_to_int %v", err)
 	}
 	return &_batchSize, nil
 }
@@ -211,4 +211,61 @@ func getAdmsNextUrl(baseUrl url.URL, lastAdm *geojson.Feature, opts admQueryOpts
 	baseUrl.RawQuery = query.Encode()
 
 	return baseUrl.String()
+}
+
+func (handler *Handler) AdmGeojsonlHandler(w http.ResponseWriter, r *http.Request) {
+	logger.Info("geojsonl_handler_called")
+	startAfterId := r.URL.Query().Get("start-after-id")
+	startAfterFid := r.URL.Query().Get("start-after-fid")
+	batchSize := r.URL.Query().Get("batch-size")
+	lvString := r.URL.Query().Get("lv")
+
+	_lv, err := getLevelIntFromString(lvString)
+	if err != nil {
+		logger.Error("failed_parsing_query_param_lv: %v", err)
+		http.Error(w, "invalid_request", http.StatusBadRequest)
+		return
+	}
+
+	_batchSize, err := getBatchSizeIntFromString(batchSize)
+	if err != nil {
+		logger.Error("failed_parsing_query_param_batch_size: %v", err)
+		http.Error(w, "invalid_request", http.StatusBadRequest)
+		return
+	}
+
+	optsBuilder := NewAdmQueryOptsBuilder()
+	optsBuilder.SetLvAndBatchSize(_lv, _batchSize)
+	optsBuilder.SetStartAfterId(startAfterId)
+	optsBuilder.SetStartAfterFid(startAfterFid)
+	optsBuilder.SetIncludeGeometry(true)
+	opts, err := optsBuilder.Build()
+	if err != nil {
+		logger.Error("failed_to_validate_adm_query_params %v", err)
+		http.Error(w, "invalid_request", http.StatusBadRequest)
+		return
+	}
+
+	flusher, err := newFlusher(r.Context(), w)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	ch := make(chan json.RawMessage, 10)
+	go func() {
+		err := handler.service.getAdmGeojsonlStream(r.Context(), ch, opts)
+		if err != nil {
+			logger.Error("failed_to_get_adm_geojsonl %v", err)
+			return
+		}
+	}()
+
+	for admJson := range ch {
+		err := flusher.flush(admJson)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
 }

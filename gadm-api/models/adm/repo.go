@@ -238,3 +238,41 @@ func (repo *Repo) IterateLeafAdms(
 		startAfterId = batch[len(batch)-1].ID
 	}
 }
+
+func (repo *Repo) GetGeojsonl(ctx context.Context, opts admQueryOpts, ch chan<- Adm) error {
+	defer close(ch)
+
+	sql, args, err := getSelectAdmsSqlQuery(opts)
+	if err != nil {
+		return fmt.Errorf("failed_to_build_query: %w", err)
+	}
+	logger.Debug("sql: %s", sql)
+	rows, err := repo.pgConn.Query(ctx, sql, args...)
+
+	if err != nil {
+		return fmt.Errorf("failed_to_query_database: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		result, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Adm])
+		if err != nil {
+			return err
+		}
+		for _, adm := range result {
+			ch <- adm
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			continue
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("failed_to_iterate_rows: %w", err)
+	}
+	return nil
+}

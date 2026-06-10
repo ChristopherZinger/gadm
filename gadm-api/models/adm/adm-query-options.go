@@ -42,18 +42,23 @@ func (builder *admQueryOptsBuilder) SetStartAfterFid(startAfterFid string) *admQ
 func (builder *admQueryOptsBuilder) SetLvAndBatchSize(lv *int, batchSize *int) *admQueryOptsBuilder {
 	builder.conf.lv = lv
 
-	_batchSize := *batchSize
-	if lv != nil {
+	if lv != nil && batchSize != nil {
+		var _batchSize int
 		if *lv < 2 {
-			_batchSize = utils.Clamp(_batchSize, 1, 5)
+			_batchSize = utils.Clamp(*batchSize, 1, 5)
 		} else if *lv < 4 {
-			_batchSize = utils.Clamp(_batchSize, 1, 20)
+			_batchSize = utils.Clamp(*batchSize, 1, 20)
 		} else {
-			_batchSize = utils.Clamp(_batchSize, 1, 50)
+			_batchSize = utils.Clamp(*batchSize, 1, 50)
 		}
+		builder.conf.batchSize = &_batchSize
+	} else if batchSize != nil {
+		v := utils.Clamp(*batchSize, 1, 100)
+		builder.conf.batchSize = &v
+	} else {
+		builder.conf.batchSize = nil
 	}
 
-	builder.conf.batchSize = &_batchSize
 	return builder
 }
 

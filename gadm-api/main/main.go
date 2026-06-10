@@ -88,6 +88,7 @@ func getApiHandlers(pgConn *db.PgConn, dbPool *pgxpool.Pool, baseApiPath string)
 	admHandler := adm.NewAdmNeighborsHandler(admService)
 	mux.HandleFunc("/adm-neighbors", admHandler.AdmNeighborsHandler)
 	mux.HandleFunc("/reverse-geocode", admHandler.AdmForLatLngHandler)
+	mux.HandleFunc("/geojsonl", admHandler.AdmGeojsonlHandler)
 
 	fcPath := "/fc"
 	fcBaseUrl := url.URL{Path: path.Join(baseApiPath, fcPath)}

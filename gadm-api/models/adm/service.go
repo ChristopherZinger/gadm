@@ -2,6 +2,7 @@ package adm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"gadm-api/logger"
 	"gadm-api/utils"
@@ -41,6 +42,45 @@ func (service *Service) GetAdmsFc(ctx context.Context, options admQueryOpts) (*g
 		return nil, err
 	}
 	return convertAdmsToFeatureCollection(adms)
+}
+
+func (service *Service) getAdmGeojsonlStream(
+	ctx context.Context,
+	ch chan<- json.RawMessage,
+	opts admQueryOpts,
+) error {
+	defer close(ch)
+
+	admCh := make(chan Adm, 10)
+	go func() {
+		err := service.repo.GetGeojsonl(ctx, opts, admCh)
+		if err != nil {
+			logger.Error("failed_to_get_geojsonl %v", err)
+			return
+		}
+	}()
+
+	for adm := range admCh {
+		admGeojson, err := convertAdmsToGeojson(adm)
+		if err != nil {
+			return err
+		}
+		data, err := json.Marshal(admGeojson)
+		if err != nil {
+			return err
+		}
+
+		ch <- data
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			continue
+		}
+	}
+
+	return nil
 }
 
 func (service *Service) GetAdmNeighborsForPoint(ctx context.Context, point utils.Point) ([]Adm, error) {
