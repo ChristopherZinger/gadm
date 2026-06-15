@@ -91,6 +91,6 @@ func getApiHandlers(pgConn *db.PgConn, dbPool *pgxpool.Pool, baseApiPath string)
 		},
 	)
 
-	handler := GetAuthMiddleWare(pgConn)(mux)
+	handler := GetAuthMiddleWare(dbPool)(mux)
 	return handler
 }
