@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"net/http"
 	"time"
 
 	accessTokenCache "gadm-api/access-token-cache"
-	db "gadm-api/db"
 	"gadm-api/logger"
+	"gadm-api/models/access_token"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -26,7 +24,13 @@ func GetAuthMiddleWare(pgPool *pgxpool.Pool) func(http.Handler) http.Handler {
 				if err := accessTokenCache.TOKEN_CACHE.HandleHitForToken(
 					token,
 					func(token string) (time.Time, error) {
-						return getTokenCreatedAtFromDb(r.Context(), pgPool, token)
+						accessTokenRepo := access_token.NewAccessTokenRepo(pgPool)
+						service := access_token.NewAccessTokenService(accessTokenRepo)
+						_token, err := service.GetAccessToken(r.Context(), token)
+						if err != nil {
+							return time.Time{}, err
+						}
+						return _token.CreatedAt, nil
 					}); err != nil {
 
 					logger.Error("token_validation_failed %v", err)
@@ -53,22 +57,6 @@ func GetAuthMiddleWare(pgPool *pgxpool.Pool) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-func getTokenCreatedAtFromDb(ctx context.Context, pgPool *pgxpool.Pool, token string) (time.Time, error) {
-	sql, args, err := db.GetAccessTokenCreatedAtSqlQuery(token)
-
-	var createdAt time.Time
-	err = pgPool.QueryRow(ctx, sql, args...).Scan(&createdAt)
-	if err != nil {
-		logger.Error("%v", err)
-		if err.Error() == NOT_RESULTS_FOR_QUERY_PG_MSG {
-			return time.Time{}, errors.New(NoResultsMsg)
-		}
-		return time.Time{}, errors.New(FailedToQueryDatabaseMsg)
-	}
-
-	return createdAt, nil
 }
 
 const (
