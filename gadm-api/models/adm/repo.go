@@ -22,7 +22,7 @@ type Adm struct {
 	GeomHash string          `db:"geom_hash" json:"geom_hash"`
 
 	Geom json.RawMessage `db:"geom" json:"geom,omitempty"`
-	Bbox json.RawMessage `db:"bbox" json:"bbox,omitempty"`
+	Bbox []float64       `db:"bbox" json:"bbox,omitempty"`
 }
 
 type Repo struct {
@@ -257,7 +257,7 @@ func (repo *Repo) GetGeojsonl(ctx context.Context, opts admQueryOpts, ch chan<- 
 	for rows.Next() {
 		result, err := pgx.CollectRows(rows, pgx.RowToStructByNameLax[Adm])
 		if err != nil {
-			return err
+			return fmt.Errorf("failed_to_scan_adm %w", err)
 		}
 		for _, adm := range result {
 			ch <- adm

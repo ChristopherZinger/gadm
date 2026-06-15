@@ -35,6 +35,7 @@ func convertAdmsToGeojson(adm Adm) (*geojson.Feature, error) {
 
 	feature := geojson.NewFeature(geom)
 	feature.ID = adm.ID
+	feature.BoundingBox = adm.Bbox
 
 	if len(adm.Metadata) > 0 {
 		if err := json.Unmarshal(adm.Metadata, &feature.Properties); err != nil {

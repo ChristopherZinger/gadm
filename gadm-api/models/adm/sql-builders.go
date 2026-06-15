@@ -83,7 +83,12 @@ func getSelectAdmsSqlQuery(options admQueryOpts) (string, []interface{}, error) 
 		fields = append(
 			fields,
 			"ST_AsGeoJSON(g.geom, 6) as geom",
-			"ST_AsGeoJSON(g.bbox, 6) as bbox",
+			`ARRAY[ 
+				ST_XMin(g.bbox), 
+				ST_YMin(g.bbox), 
+				ST_XMax(g.bbox), 
+				ST_YMax(g.bbox)
+			] as bbox`,
 		)
 	}
 	query := psql.
