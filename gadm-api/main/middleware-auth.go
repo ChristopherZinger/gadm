@@ -8,14 +8,13 @@ import (
 
 	accessTokenCache "gadm-api/access-token-cache"
 	db "gadm-api/db"
-	"gadm-api/handlers"
 	"gadm-api/logger"
 )
 
 func GetAuthMiddleWare(pgConn *db.PgConn) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token, err := handlers.GetAuthTokenFromRequest(r)
+			token, err := getApiAuthTokenFromRequest(r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
@@ -61,7 +60,7 @@ func getTokenCreatedAtFromDb(ctx context.Context, pgConn *db.PgConn, token strin
 	err = pgConn.Db.QueryRow(ctx, sql, args...).Scan(&createdAt)
 	if err != nil {
 		logger.Error("%v", err)
-		if err.Error() == handlers.NOT_RESULTS_FOR_QUERY_PG_MSG {
+		if err.Error() == NOT_RESULTS_FOR_QUERY_PG_MSG {
 			return time.Time{}, errors.New(NoResultsMsg)
 		}
 		return time.Time{}, errors.New(FailedToQueryDatabaseMsg)

@@ -1,4 +1,4 @@
-package handlers
+package main
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 const NOT_RESULTS_FOR_QUERY_PG_MSG = "no rows in result set"
 
-func GetAuthTokenFromRequest(r *http.Request) (string, error) {
+func getApiAuthTokenFromRequest(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	logger.Debug("auth_header_received header=%s remote_addr=%s path=%s", authHeader, r.RemoteAddr, r.URL.Path)
 	var token string
@@ -29,10 +29,10 @@ func GetAuthTokenFromRequest(r *http.Request) (string, error) {
 				return "", errors.New("empty_token")
 			}
 			return token, nil
-		} else {
-			logger.Debug("invalid_bearer_format auth_header=%s", authHeader)
-			return "", errors.New("invalid_bearer_format")
 		}
+		logger.Debug("invalid_bearer_format auth_header=%s", authHeader)
+		return "", errors.New("invalid_bearer_format")
+
 	}
 	logger.Debug("missing_token remote_addr=%s path=%s", r.RemoteAddr, r.URL.Path)
 	return "", errors.New("missing_token")
