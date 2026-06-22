@@ -7,12 +7,11 @@ import (
 	"os"
 	"path"
 
-	db "gadm-api/db"
 	gameloop "gadm-api/game-loop"
-	"gadm-api/handlers"
 	"gadm-api/infra/pg"
 	"gadm-api/jobs"
 	"gadm-api/logger"
+	"gadm-api/models/access_token"
 	"gadm-api/models/adm"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -52,13 +51,12 @@ const MAX_PG_CONNS = int32(45)
 func startRestApi() {
 	dbPool := pg.InitPgPool(MAX_PG_CONNS)
 	defer dbPool.Close()
-	pgConn := db.CreatePgConnector(dbPool)
 	mux := http.NewServeMux()
 
 	baseApiPath := "/api/v1"
 	mux.Handle(baseApiPath+"/", http.StripPrefix(
 		baseApiPath,
-		getApiHandlers(pgConn, dbPool, baseApiPath),
+		getApiHandlers(dbPool, baseApiPath),
 	))
 
 	mux.Handle("/ws", http.HandlerFunc(getWebsocketHandler))
@@ -69,11 +67,16 @@ func startRestApi() {
 	log.Fatal(http.ListenAndServe(":8080", handler))
 }
 
-func getApiHandlers(pgConn *db.PgConn, dbPool *pgxpool.Pool, baseApiPath string) http.Handler {
+func getApiHandlers(dbPool *pgxpool.Pool, baseApiPath string) http.Handler {
 	mux := http.NewServeMux()
 
-	createAccessTokenHandlerInfo := handlers.GetAccessTokenCreationHandlerInfo(pgConn)
-	mux.HandleFunc(createAccessTokenHandlerInfo.Url, createAccessTokenHandlerInfo.Handler)
+	accessTokenRepo := access_token.NewAccessTokenRepo(dbPool)
+	accessTokenService := access_token.NewAccessTokenService(accessTokenRepo)
+	accessTokenHandler := access_token.NewAccessTokenHandler(accessTokenService)
+	tokenCreationRateLimiter := access_token.NewAccessTokenCreationRateLimiter()
+	mux.HandleFunc("/create-access-token", func(w http.ResponseWriter, r *http.Request) {
+		accessTokenHandler.CreateAccessTokenHandler(w, r, tokenCreationRateLimiter)
+	})
 
 	admRepo := adm.NewAdmRepo(dbPool)
 	admService := adm.NewAdmService(admRepo)

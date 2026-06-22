@@ -137,18 +137,3 @@ func GetNextFidSqlQuery(params GetNextFidSqlQueryParams) (string, []interface{},
 	}
 	return sql, args, nil
 }
-
-func GetInsertAccessTokenWithReturningSqlQuery(email string) (string, []interface{}, error) {
-	sql, args, err := psql.
-		Insert(ACCESS_TOKEN_TABLE).
-		Columns(AccessTokensTable.Email).
-		Values(email).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", AccessTokensTable.Token, AccessTokensTable.CreatedAt)).
-		ToSql()
-
-	if err != nil {
-		return "", nil, err
-	}
-	return sql, args, nil
-
-}

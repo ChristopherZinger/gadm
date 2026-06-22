@@ -3,7 +3,6 @@ package access_token
 import (
 	"context"
 	"fmt"
-	"gadm-api/logger"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -27,7 +26,6 @@ func NewAccessTokenRepo(db *pgxpool.Pool) *accessTokenRepo {
 	return &accessTokenRepo{db}
 }
 
-
 func (repo *accessTokenRepo) getAccessToken(ctx context.Context, token string) (*accessToken, error) {
 	sql, args, err := getAccessTokenSqlQuery(token)
 	if err != nil {
@@ -47,4 +45,17 @@ func (repo *accessTokenRepo) getAccessToken(ctx context.Context, token string) (
 	}
 
 	return &_accessToken, nil
+}
+
+func (repo *accessTokenRepo) createAccessToken(ctx context.Context, email string, token string) error {
+	sql, args, err := getInsertAccessToken(email, token)
+	if err != nil {
+		return fmt.Errorf("failed_to_create_access_token_sql_query %v", err)
+	}
+
+	_, err = repo.db.Exec(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("failed_to_create_access_token %v", err)
+	}
+	return nil
 }
